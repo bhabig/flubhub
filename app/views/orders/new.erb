@@ -1,0 +1,19 @@
+<h1>Begin Order</h1>
+<form action="/orders" method="POST">
+  <p><strong>Choose From Our List of Existing Items</strong></p>
+  <%Item.all.each do |item|%>
+    <ul>
+      <li><input type="checkbox" name="order[items][]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%></strong></input></li>
+      <p>{ <%= item.ingredients %> }</p>
+      <br></br>
+    </ul>
+  <%end%>
+  <p><strong>Or Create Your Own</strong></p>
+  <p><strong>Name:</strong> <input type="text" name="order[item][name]"></p>
+  <p><strong>Bun:</strong <input type="text" name="order[item][ingredients][]"></p>
+  <p><strong>Meat:</strong <input type="text" name="order[item][ingredients][]"></p>
+  <p><strong>Cheese:</strong <input type="text" name="order[item][ingredients][]"></p>
+  <p><strong>Vegetables:</strong <input type="text" name="order[item][ingredients][]"></p>
+  <p><strong>Extras:</strong <input type="text" name="order[item][ingredients][]"></p>
+  <input class="btn btn-primary" type="submit">
+</form>

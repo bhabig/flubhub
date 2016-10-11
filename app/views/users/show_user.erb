@@ -1,0 +1,14 @@
+<h1>Hi, <%= @user.username.capitalize %></h1>
+<br></br>
+<h2>Here are your past orders</h2>
+<% @user.orders.each do |order| %>
+  <% if order.order_placed == true %>
+    <ul>
+      <li><%=order.order_time%> (completed)</li>
+      <p><a href="/order">click to view details or place order again</a></p>
+    </ul>
+  <% end %>
+<% end %>
+<a href="/orders/new">click to place new order</a> <strong>|</strong>
+<a href="/users/<%=@user.id%>/edit">click here to edit account information</a> <strong>|</strong>
+<a href="/users/delete">click here to delete account</a>

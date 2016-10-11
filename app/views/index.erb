@@ -1,0 +1,10 @@
+<h1>Welcome!</h1>
+<% if logged_in? %>
+  <h2><a href="/orders/new">Click To Start A New Order</a></h2>
+  <h2><a href="/user">Click To View Past Orders</a></h2>
+  <h2><a href="/logout">Click To Log Out</a></h2>
+<% else %>
+  <h2><a href="/signup">Click To Sign Up</a></h2>
+  <h3>Or</h3>
+  <h2><a href="/login">Click To Log In</a></h2>
+<% end %>
