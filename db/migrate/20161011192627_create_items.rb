@@ -4,6 +4,7 @@ class CreateItems < ActiveRecord::Migration
       t.string :name
       t.text :ingredients
       t.float :price
+      t.integer :order_id
     end
   end
 end

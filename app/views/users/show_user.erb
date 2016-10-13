@@ -1,13 +1,17 @@
 <h1>Hi, <%= @user.username.capitalize %></h1>
 <br></br>
+<% if !@user.orders.empty? %>
 <h2>Here are your past orders</h2>
-<% @user.orders.each do |order| %>
-  <% if order.order_placed == true %>
-    <ul>
-      <li><%=order.order_time%> (completed)</li>
-      <p><a href="/order">click to view details or place order again</a></p>
-    </ul>
+  <% @user.orders.each do |order| %>
+    <% if order.order_placed == true %>
+      <ul>
+        <li><%=order.order_time%> (completed)</li>
+        <p><a href="/orders/<%=order.id%>">click to view details or place order again</a></p>
+      </ul>
+    <% end %>
   <% end %>
+  <% else %>
+  <p><strong>Looks Like You Haven't Placed An Order Yet! <a href="/orders/new">Click To Start Your First Order</a></strong></p><br>
 <% end %>
 <a href="/orders/new">click to place new order</a> <strong>|</strong>
 <a href="/users/<%=@user.id%>/edit">click here to edit account information</a> <strong>|</strong>

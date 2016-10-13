@@ -11,17 +11,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161008133005) do
+ActiveRecord::Schema.define(version: 20161011192627) do
 
   create_table "items", force: :cascade do |t|
-    t.string "name"
-    t.text   "ingredients"
-    t.float  "price"
+    t.string  "name"
+    t.text    "ingredients"
+    t.float   "price"
+    t.integer "order_id"
   end
 
-  create_table "user_orders", force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "item_id"
+  create_table "orders", force: :cascade do |t|
+    t.float    "total",        default: 0.0
+    t.boolean  "order_placed", default: false
+    t.integer  "user_id"
+    t.datetime "order_time",   default: '2016-10-11 23:01:00'
   end
 
   create_table "users", force: :cascade do |t|

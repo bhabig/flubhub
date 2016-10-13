@@ -1,6 +1,8 @@
 class Item < ActiveRecord::Base
-  has_many :order_items
-  has_many :users, through: :order_items
+  belongs_to :order
 
-  ITEMS = []
+  @@meats = []
+  @@cheeses = []
+  @@buns = []
+  @@extras = []
 end
