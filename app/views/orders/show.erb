@@ -7,6 +7,7 @@
 <p><strong><%=@order.order_time%></strong></p>
 <h2>Items:</h2>
   <% @order.items.each do |item| %>
+
   <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p><br>
 <% end %>
 <p><strong>TOTAL: $<%=@order.total%></strong></p>
@@ -15,3 +16,4 @@
   <input id="hidden" type="hidden" name="_method" value="DELETE">
   <input type="submit" value="Delete Order">
 </form>
+flash[:message] = "Thank You! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"

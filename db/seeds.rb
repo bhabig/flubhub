@@ -13,8 +13,6 @@ items_list = {
     }
   }
 
-
-
 items_list.each do |name, figure_hash|
   p = Item.new
   p.name = name
@@ -22,17 +20,18 @@ items_list.each do |name, figure_hash|
   p.price = figure_hash[:price]
   p.save
 end
-
-Item.all.map do |item|
-  item.ingredients.map! do |ingredient|
+=begin
+Item.all.each do |i|
+  i.ingredients.split(", ").each do |ingredient|
     if ingredient.include?("bun")
-      BUNS << ingredient.strip
+      Item.buns << ingredient
     elsif ingredient.include?("lb.")
-      MEATS << ingredient.strip
-    elsif ingredients.include?("cheese")
-      CHEESES << ingredient.strip
+      Item.meats << ingredient
+    elsif ingredient.include?("cheese")
+      Item.cheeses << ingredient
     else
-      EXTRAS << ingredient.strip
+      Item.extras << ingredient
     end
   end
 end
+=end

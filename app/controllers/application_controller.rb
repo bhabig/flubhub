@@ -2,7 +2,7 @@ require './config/environment'
 
 class ApplicationController < Sinatra::Base
   register Sinatra::ActiveRecordExtension
-  
+
   configure do
     set :public_folder, 'public'
     set :views, 'app/views'
@@ -11,6 +11,9 @@ class ApplicationController < Sinatra::Base
   end
 
   get '/' do
+    if current_user != nil
+      @user = current_user
+    end
     erb :index
   end
 

@@ -15,6 +15,7 @@ class OrdersController < ApplicationController
 
   get '/orders/new' do
     if logged_in?
+      Item.sorter
       erb :'orders/new'
     else
       redirect "/login"
@@ -23,16 +24,27 @@ class OrdersController < ApplicationController
 
   post '/orders' do
     @user = current_user
-    @order = Order.create(params[:order])
-    if !@order.items.empty? && logged_in?
-      @order.order_finished
-      @order.finished_order
+    if !params[:order]
+      item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+    end
+
+    if params[:order]
+      @order = Order.create(params[:order])
+      if !@order.items.empty? && logged_in?
+        @order.order_finished
+        @order.finished_order
+        @order.items << item if item
+        @order.total
+      end
+    else
+      @order = Order.create(user_id: @user.id)
+      #@order.order_completed   #should this be moved to a different controller action?
+      @order.time_started
+      @order.items << item
       @order.total
     end
     @order.save
     @user.orders << @order
-
-    flash[:message] = "Thank You! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
 
     redirect :"/orders/#{@order.id}"
   end

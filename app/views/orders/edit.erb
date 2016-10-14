@@ -1,0 +1,42 @@
+<h1>Begin Order</h1>
+<form action="/orders" method="POST">
+  <p><strong>Choose From Our List of Existing Items</strong></p>
+  <%Item.all[0..2].each do |item|%>
+    <ul>
+      <li><input type="checkbox" name="order[item_ids][]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%></strong></input></li>
+      <p>{ <%= item.ingredients %> }</p>
+      <br></br>
+    </ul>
+  <%end%>
+  <p><strong>Or Create Your Own</strong></p>
+  <h2>NAME: <input type="text" name="item[name]"></h2>
+  <h2>BUNS:</h2><br>
+  <%Item.buns.uniq.each do |bun|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=bun%>" value="<%=bun%>"><strong><%=bun%></strong></input></li>
+    </ul>
+  <%end%>
+  <br></br>
+  <h2>MEATS:</h2><br>
+  <%Item.meats.uniq.each do |meat|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=meat%>" value="<%=meat%>"><strong><%=meat%></strong></input></li>
+    </ul>
+  <%end%>
+  <br></br>
+  <h2>CHEESES:</h2><br>
+  <%Item.cheeses.uniq.each do |cheeses|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=cheeses%>" value="<%=cheeses%>"><strong><%=cheeses%></strong></input></li>
+    </ul>
+  <%end%>
+  <br></br>
+  <h2>EXTRAS:</h2><br>
+  <%Item.extras.uniq.each do |extra|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=extra%>" value="<%=extra%>"><strong><%=extra%></strong></input></li>
+    </ul>
+  <%end%>
+  <br></br>
+  <input class="btn btn-primary" type="submit">
+</form>
