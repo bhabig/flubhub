@@ -1,19 +1,29 @@
-<% if flash.has?(:message) %>
-  <p><%= flash[:message] %></p>
-<% end %>
+<h1><%= @user.username.capitalize %>, Here Is Your Florder!</h1>
 
-<h1><%= @user.username.capitalize %>, Here Is Your Order!</h1>
-
-<p><strong><%=@order.order_time%></strong></p>
-<h2>Items:</h2>
+<% if @order.order_placed == true %>
+  <p><strong><%=@order.order_time%></strong></p>
+  <h2>Items:</h2>
   <% @order.items.each do |item| %>
-
-  <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p><br>
+    <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p><br>
+  <% end %>
+  <p><strong>TOTAL: $<%=@order.total%></strong></p>
+  <p>To Go Back To Florders Click <a href="/user">Here</a></p>
+  <form method="post" action="/orders/<%=@order.id%>/delete">
+    <input id="hidden" type="hidden" name="_method" value="DELETE">
+    <input type="submit" value="Delete Florder">
+  </form>
+<% elsif @order.order_placed == false %>
+  <p><strong><%=@order.order_time%></strong></p>
+  <h2>Items:</h2>
+  <% @order.items.each do |item| %>
+  <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p><p>remove item</p><br>
+  <% end %>
+  <p><strong>TOTAL: $<%=@order.total%></strong></p>
+  <a href="/placed_order/<%=@order.id%>">Place Florder</a> <strong>|</strong>
+  <a href="/orders/<%=@order.id%>/edit">Edit Florder</a><br>
+  <br>
+  <form method="post" action="/orders/<%=@order.id%>/delete">
+    <input id="hidden" type="hidden" name="_method" value="DELETE">
+    <input type="submit" value="Cancel Florder">
+  </form>
 <% end %>
-<p><strong>TOTAL: $<%=@order.total%></strong></p>
-<p>To Go Back To Orders Click <a href="/user">Here</a></p>
-<form method="post" action="/orders/<%=@order.id%>/delete">
-  <input id="hidden" type="hidden" name="_method" value="DELETE">
-  <input type="submit" value="Delete Order">
-</form>
-flash[:message] = "Thank You! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"

@@ -34,7 +34,7 @@ class OrdersController < ApplicationController
     	@order = Order.create(user_id: @user.id)
     	@order.items << item
     end
-    @order.order_completed
+
     @order.time_started
     @order.total
     @order.save
@@ -44,22 +44,75 @@ class OrdersController < ApplicationController
   end
 
   get '/orders/:id' do
-    @user = current_user
-    @order = Order.find_by_id(params[:id])
-    if @order.user_id == @user.id && @order.order_placed == true
-      erb :'orders/show'
+    if logged_in?
+      @user = current_user
+      @order = Order.find_by_id(params[:id])
+      if @order.user_id == @user.id && @order
+        erb :'orders/show'
+      else
+        redirect '/user'
+      end
     else
-      redirect :"/orders/#{@order.id}/edit"
+      redirect '/login'
     end
   end
 
   get '/orders/:id/edit' do
-
+    if logged_in?
+      @user = current_user
+      @order = Order.find_by_id(params[:id])
+      if @order.user_id == @user.id
+        Item.sorter
+        erb :'orders/edit'
+      end
+    else
+      redirect '/login'
+    end
   end
 
   patch '/orders/:id' do
+    @user = current_user
+    @order = Order.find_by_id(params[:id])
+    if params[:order]
+      @order.update(params[:order])
+    elsif !params[:order] && !params[:ingredients]
+      @order.items.clear
 
+=begin
+      if params[:ingredients]
+        @order.items << Item.update(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+      end
+    elsif params[:ingredients] && !params[:order]
+    	item = Item.update(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+    	@order.update(user_id: @user.id)
+    	@order.items << item
+=end
+      end
+
+    @order.total
+    @order.save
+
+    redirect "/orders/#{@order.id}"
   end
+
+  get '/placed_order/:id' do
+    if logged_in?
+      @user = current_user
+      @order = Order.find_by_id(params[:id])
+      if @order.total > 0
+        @order.order_completed
+        @order.save
+        flash[:message] = "Thank You #{@user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
+        erb :'orders/completed_order'
+      else
+        flash[:message] = "Thank You #{@user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
+        redirect :"/orders/#{@order.id}"
+      end
+    else
+      redirect '/login'
+    end
+  end
+
 
   delete '/orders/:id/delete' do
     @order = Order.find_by_id(params[:id])
@@ -71,6 +124,7 @@ class OrdersController < ApplicationController
     if logged_in?
       @user = current_user
       @user.orders.clear
+      Order.all.map{|o| o.delete if o.user_id == @user.id}
       redirect '/user'
     else
       redirect '/login'

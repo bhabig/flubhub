@@ -1,19 +1,31 @@
 <h1>Hi, <%= @user.username.capitalize %></h1>
 <br></br>
-<% if !@user.orders.empty? %>
-<h2>Here are your past orders</h2>
+<% if @user.orders.find{|o| o.order_placed == false} %>
+  <h2>Open florders:</h2>
   <% @user.orders.each do |order| %>
-    <% if order.order_placed == true %>
+    <% if order.order_placed == false %>
       <ul>
-        <li><%=order.order_time%> (completed)</li>
-        <p><a href="/orders/<%=order.id%>">click to view details or place order again</a></p>
+        <li><%=order.order_time%> (open)</li>
+        <p><a href="/orders/<%=order.id%>">click to edit or place florder</a></p>
       </ul>
     <% end %>
   <% end %>
-  <% else %>
-  <p><strong>Looks Like You Haven't Placed An Order Yet! <a href="/orders/new">Click To Start Your First Order</a></strong></p><br>
+<%end%>
+<% if @user.orders.find{|o| o.order_placed == true} %>
+  <h2>Placed florders:</h2>
+  <% @user.orders.each do |order| %>
+    <% if order.order_placed == true %>
+      <ul>
+        <li><%=order.order_time%> (placed)</li>
+        <p><a href="/orders/<%=order.id%>">click to place florder again or delete</a></p>
+      </ul>
+    <% end %>
+  <% end %>
+<%end%>
+<% if @user.orders.empty? %>
+  <p><strong>Looks Like You Haven't Placed A Florder Yet! <a href="/orders/new">Click To Start Your First Florder</a></strong></p><br>
 <% end %>
-<a href="/orders/new">click to place new order</a> <strong>|</strong>
-<a href="/delete_all">click here to delete all orders from history</a> <strong>|</strong>
+<a href="/orders/new">click to place new florder</a> <strong>|</strong>
+<a href="/delete_all">click here to delete all florders from history</a> <strong>|</strong>
 <a href="/users/<%=@user.id%>/edit">click here to edit account information</a> <strong>|</strong>
 <a href="/users/delete">click here to delete account</a>

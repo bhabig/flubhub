@@ -1,9 +1,12 @@
-<h1>Begin Order</h1>
-<form action="/orders" method="POST">
-  <p><strong>Choose From Our List of Existing Items</strong></p>
-  <%Item.all[0..2].each do |item|%>
+<h1>Almost Done! Make Changes Now And Then Place Your Florder!!</h1>
+<form action="/orders/<%=@order.id%>" method="POST">
+  <input type="hidden" name="_method" value="PATCH">
+  <% @order.items.each do |item| %>
+    <p><strong><%=item.name%> ($<%=item.price%>)</strong>click to edit item</p><br>
+  <% end %>
+  <% @order.items.each do |item|%>
     <ul>
-      <li><input type="checkbox" name="order[item_ids][]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%></strong></input></li>
+      <li><input type="checkbox" name="order[item_ids][]" id="<%=item.id%>" value="<%=item.id%>" <%= 'checked' if @order.items.include?(item) %>><strong><%=item.name%> ($<%=item.price%>)</strong></input></li>
       <p>{ <%= item.ingredients %> }</p>
       <br></br>
     </ul>
