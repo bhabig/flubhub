@@ -39,14 +39,14 @@ class OrdersController < ApplicationController
     @order.total
     @order.save
     @user.orders << @order
-    	
+
     redirect :"/orders/#{@order.id}"
   end
 
   get '/orders/:id' do
     @user = current_user
     @order = Order.find_by_id(params[:id])
-    if @order.user_id == @user.id && @order.order_completed == true
+    if @order.user_id == @user.id && @order.order_placed == true
       erb :'orders/show'
     else
       redirect :"/orders/#{@order.id}/edit"
@@ -65,5 +65,15 @@ class OrdersController < ApplicationController
     @order = Order.find_by_id(params[:id])
     @order.delete
     redirect '/user'
+  end
+
+  get '/delete_all' do
+    if logged_in?
+      @user = current_user
+      @user.orders.clear
+      redirect '/user'
+    else
+      redirect '/login'
+    end
   end
 end
