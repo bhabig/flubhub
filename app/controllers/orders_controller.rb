@@ -26,15 +26,31 @@ class OrdersController < ApplicationController
     @user = current_user
     if params[:order]
     	@order = Order.create(params[:order])
-    	if params[:ingredients]
+      params[:order][:item_ids].each.with_index do |id, i|
+        if params[:quantity][id.to_i-1].to_i
+          (params[:quantity][id.to_i-1].to_i-1).times do
+            @order.items << Item.find_by_id(id)
+          end
+        end
+      end
+    	if params[:ingredients] && params[:item][:quantity] == ""
     		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+      elsif params[:ingredients] && params[:item][:quantity] != ""
+        params[:item][:quantity].to_i.times do
+          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        end
     	end
     elsif params[:ingredients] && !params[:order]
-    	item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
-    	@order = Order.create(user_id: @user.id)
-    	@order.items << item
+      @order = Order.create(user_id: @user.id)
+      if params[:ingredients] && params[:item][:quantity] == ""
+    		@order.items = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+      elsif params[:ingredients] && params[:item][:quantity] != ""
+        params[:item][:quantity].to_i.times do
+          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        end
+    	end
     end
-
+    #binding.pry
     @order.time_started
     @order.total
     @order.save
@@ -47,7 +63,10 @@ class OrdersController < ApplicationController
     if logged_in?
       @user = current_user
       @order = Order.find_by_id(params[:id])
-      if @order.user_id == @user.id && @order
+      if @order.user_id == @user.id && !@order.items.empty?
+        x = @order.items.map{|i| i.name}
+        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
+
         erb :'orders/show'
       else
         redirect '/user'
@@ -63,6 +82,8 @@ class OrdersController < ApplicationController
       @order = Order.find_by_id(params[:id])
       if @order.user_id == @user.id
         Item.sorter
+        x = @order.items.map{|i| i.name}
+        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
         erb :'orders/edit'
       end
     else
@@ -70,24 +91,44 @@ class OrdersController < ApplicationController
     end
   end
 
+  get '/orders/:id/place_again' do
+    @user = current_user
+    order = Order.find_by_id(params[:id])
+    if order
+      @order = Order.new(user_id: order.attributes[:user_id])
+    end
+
+    @order.time_started
+    @order.items << order.items
+    @order.total
+    @order.save
+    @user.orders << @order
+
+    redirect :"/placed_order/#{@order.id}"
+  end
+
   patch '/orders/:id' do
     @user = current_user
     @order = Order.find_by_id(params[:id])
     if params[:order]
       @order.update(params[:order])
+      if params[:ingredients] && params[:item][:quantity] == ""
+    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+      elsif params[:ingredients] && params[:item][:quantity] != ""
+        params[:item][:quantity].to_i.times do
+          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        end
+    	end
     elsif !params[:order] && !params[:ingredients]
       @order.items.clear
-
-=begin
-      if params[:ingredients]
-        @order.items << Item.update(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
-      end
-    elsif params[:ingredients] && !params[:order]
-    	item = Item.update(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
-    	@order.update(user_id: @user.id)
+      redirect '/user'
+    elsif !params[:order] && params[:ingredients]
+      item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+    	@order = Order.create(user_id: @user.id)
     	@order.items << item
-=end
-      end
+      @order.time_started
+      @user.orders << @order
+    end
 
     @order.total
     @order.save

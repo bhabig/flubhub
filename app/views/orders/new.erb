@@ -1,10 +1,11 @@
-<h1>Begin Order</h1>
+<h1>Begin Florder</h1>
 <form action="/orders" method="POST">
   <p><strong>Choose From Our List of Existing Items</strong></p>
   <%Item.all[0..2].each do |item|%>
     <ul>
       <li><input type="checkbox" name="order[item_ids][]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%></strong></input></li>
       <p>{ <%= item.ingredients %> }</p>
+      <p>Too hungry for just one? How many would you like?<input type="text" name="quantity[]" id="<%=item.id%>" placeholder="enter quantity (2 or higher)">
       <br></br>
     </ul>
   <%end%>
@@ -37,6 +38,8 @@
       <li><input type="checkbox" name="ingredients[]" id="<%=extra%>" value="<%=extra%>"><strong><%=extra%></strong></input></li>
     </ul>
   <%end%>
+  <br></br>
+  <p>Too hungry for just one? How many would you like?<input type="text" name="item[quantity]" placeholder="quantity"></p>
   <br></br>
   <input class="btn btn-primary" type="submit">
 </form>

@@ -3,10 +3,13 @@
 <% if @order.order_placed == true %>
   <p><strong><%=@order.order_time%></strong></p>
   <h2>Items:</h2>
-  <% @order.items.each do |item| %>
-    <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p><br>
+  <% @order.items.sort.uniq.each do |item| %>
+    <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p>
+    <p>Quantity: <%= @counts[item.name] %></p>
+    <br>
   <% end %>
   <p><strong>TOTAL: $<%=@order.total%></strong></p>
+  <p>To Place This Order Again Click <a href="/orders/<%=@order.id%>/place_again">Here</a></p>
   <p>To Go Back To Florders Click <a href="/user">Here</a></p>
   <form method="post" action="/orders/<%=@order.id%>/delete">
     <input id="hidden" type="hidden" name="_method" value="DELETE">
@@ -15,8 +18,16 @@
 <% elsif @order.order_placed == false %>
   <p><strong><%=@order.order_time%></strong></p>
   <h2>Items:</h2>
-  <% @order.items.each do |item| %>
-  <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p><p>remove item</p><br>
+  <% @order.items.sort.uniq.each do |item| %>
+  <ul>
+    <li><p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p>
+    <p>Quantity: <%= @counts[item.name] %></p>
+    <% if @counts[item.name] < 2 %>
+      <p>remove item</p></li><br>
+    <% elsif @counts[item.name] >= 2 %>
+      <p>remove items</p></li><br>
+    <% end %>
+  </ul>
   <% end %>
   <p><strong>TOTAL: $<%=@order.total%></strong></p>
   <a href="/placed_order/<%=@order.id%>">Place Florder</a> <strong>|</strong>

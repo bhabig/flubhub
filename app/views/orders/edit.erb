@@ -1,17 +1,19 @@
 <h1>Almost Done! Make Changes Now And Then Place Your Florder!!</h1>
 <form action="/orders/<%=@order.id%>" method="POST">
   <input type="hidden" name="_method" value="PATCH">
-  <% @order.items.each do |item| %>
-    <p><strong><%=item.name%> ($<%=item.price%>)</strong>click to edit item</p><br>
+  <% @order.items.sort.uniq.each do |item| %>
+    <p><strong><%=item.name%> ($<%=item.price%>)</strong> change quantity: <input type="text" name="quantity[]" id="<%=item.id%>" placeholder="<%=@counts[item.name]%>"></p><br>
   <% end %>
-  <% @order.items.each do |item|%>
+  <h2>Add More Items:</h2>
+  <%Item.all[0..2].each do |item|%>
     <ul>
-      <li><input type="checkbox" name="order[item_ids][]" id="<%=item.id%>" value="<%=item.id%>" <%= 'checked' if @order.items.include?(item) %>><strong><%=item.name%> ($<%=item.price%>)</strong></input></li>
+      <li><input type="checkbox" name="order[item_ids][]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%></strong></input></li>
       <p>{ <%= item.ingredients %> }</p>
+      <p>Too hungry for just one? How many would you like?<input type="text" name="quantity[]" id="<%=item.id%>" placeholder="enter quantity (2 or higher)">
       <br></br>
     </ul>
   <%end%>
-  <p><strong>Or Create Your Own</strong></p>
+  <h2><strong>Or Create Your Own</strong></h2>
   <h2>NAME: <input type="text" name="item[name]"></h2>
   <h2>BUNS:</h2><br>
   <%Item.buns.uniq.each do |bun|%>
@@ -41,5 +43,6 @@
     </ul>
   <%end%>
   <br></br>
+  <p>Too hungry for just one? How many would you like?<input type="text" name="item[quantity]" placeholder="quantity"></p>
   <input class="btn btn-primary" type="submit">
 </form>

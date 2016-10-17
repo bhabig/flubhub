@@ -1,5 +1,7 @@
 class Order < ActiveRecord::Base
-  has_many :items
+
+  has_many :quantities
+  has_many :items, through: :quantities
   belongs_to :user
 
   def total
@@ -14,4 +16,5 @@ class Order < ActiveRecord::Base
   def order_completed
     self.order_placed = true
   end
+
 end

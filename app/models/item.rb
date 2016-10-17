@@ -1,10 +1,19 @@
 class Item < ActiveRecord::Base
-  belongs_to :order
+  has_many :quantities
+  has_many :orders, through: :quantities
 
   @@cheeses = []
   @@buns = []
   @@extras = []
   @@meats = []
+
+  def quantity(order)
+    quantity = {}
+    order.items.each do |item|
+      quantity[:item.name]=order.items.map{|i| item if i.name == item.name}.size
+    end
+    quantity
+  end
 
   def self.sorter
     self.all.each do |i|
