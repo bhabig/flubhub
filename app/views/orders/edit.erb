@@ -1,8 +1,9 @@
 <h1>Almost Done! Make Changes Now And Then Place Your Florder!!</h1>
+<br></br>
 <form action="/orders/<%=@order.id%>" method="POST">
   <input type="hidden" name="_method" value="PATCH">
   <% @order.items.sort.uniq.each do |item| %>
-    <p><strong><%=item.name%> ($<%=item.price%>)</strong> change quantity: <input type="text" name="quantity[]" id="<%=item.id%>" placeholder="<%=@counts[item.name]%>"></p><br>
+    <p><strong>- <%=item.name%> ($<%=item.price%>)</strong> change quantity: <input type="text" name="original_qty[]" id="<%=item.id%>" placeholder="<%=@counts[item.name]%>"></p><br>
   <% end %>
   <h2>Add More Items:</h2>
   <%Item.all[0..2].each do |item|%>

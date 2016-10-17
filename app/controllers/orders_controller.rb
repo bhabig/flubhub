@@ -36,21 +36,23 @@ class OrdersController < ApplicationController
     	if params[:ingredients] && params[:item][:quantity] == ""
     		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
       elsif params[:ingredients] && params[:item][:quantity] != ""
+        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
         params[:item][:quantity].to_i.times do
-          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+          @order.items << item
         end
     	end
     elsif params[:ingredients] && !params[:order]
       @order = Order.create(user_id: @user.id)
       if params[:ingredients] && params[:item][:quantity] == ""
-    		@order.items = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
       elsif params[:ingredients] && params[:item][:quantity] != ""
+        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
         params[:item][:quantity].to_i.times do
-          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+          @order.items << item
         end
     	end
     end
-    #binding.pry
+
     @order.time_started
     @order.total
     @order.save
@@ -108,8 +110,10 @@ class OrdersController < ApplicationController
   end
 
   patch '/orders/:id' do
+
     @user = current_user
     @order = Order.find_by_id(params[:id])
+    binding.pry
     if params[:order]
       @order.update(params[:order])
       if params[:ingredients] && params[:item][:quantity] == ""
