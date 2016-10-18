@@ -22,16 +22,12 @@
   <ul>
     <li><p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p>
     <p>Quantity: <%= @counts[item.name] %></p>
-    <% if @counts[item.name] < 2 %>
-      <p>remove item</p></li><br>
-    <% elsif @counts[item.name] >= 2 %>
-      <p>remove items</p></li><br>
-    <% end %>
   </ul>
   <% end %>
   <p><strong>TOTAL: $<%=@order.total%></strong></p>
   <a href="/placed_order/<%=@order.id%>">Place Florder</a> <strong>|</strong>
-  <a href="/orders/<%=@order.id%>/edit">Edit Florder</a><br>
+  <a href="/orders/<%=@order.id%>/continue_shopping">Continue Shopping</a> <strong>|</strong>
+  <a href="/orders/<%=@order.id%>/change_item_quantities">Edit Item Amounts</a><br>
   <br>
   <form method="post" action="/orders/<%=@order.id%>/delete">
     <input id="hidden" type="hidden" name="_method" value="DELETE">
