@@ -1,31 +1,31 @@
 <h1>Hi, <%= @user.username.capitalize %></h1>
 <br></br>
-<% if @user.orders.find{|o| o.order_placed == false} %>
+<% if @user.orders.find{|o| o.order_placed == false} && !@user.orders.find{|o| o.items.empty?}%>
   <h2>Open florders:</h2>
   <% @user.orders.each do |order| %>
-    <% if order.order_placed == false %>
+    <% if order.order_placed == false && order.items.empty? %>
+      <% order.delete %>
+    <% elsif order.order_placed == false && !order.items.empty? %>
       <ul>
         <li><%=order.order_time%> (open)</li>
-        <p><a href="/orders/<%=order.id%>">click to edit or place florder</a></p>
+        <p><a href="/orders/<%=order.id%>">edit or place florder</a></p>
       </ul>
     <% end %>
   <% end %>
-<%end%>
-<% if @user.orders.find{|o| o.order_placed == true} %>
+<% elsif !@user.orders.empty? && @user.orders.find{|o| o.order_placed == true} && !@user.orders.find{|o| o.items.empty?}%>
   <h2>Placed florders:</h2>
   <% @user.orders.each do |order| %>
     <% if order.order_placed == true %>
       <ul>
         <li><%=order.order_time%> (placed)</li>
-        <p><a href="/orders/<%=order.id%>">click to place florder again or delete</a></p>
+        <p><a href="/orders/<%=order.id%>">place florder again or delete</a></p>
       </ul>
     <% end %>
   <% end %>
-<%end%>
-<% if @user.orders.empty? %>
+<% else %>
   <p><strong>Looks Like You Haven't Placed A Florder Yet! <a href="/orders/new">Click To Start Your First Florder</a></strong></p><br>
 <% end %>
-<a href="/orders/new">click to place new florder</a> <strong>|</strong>
-<a href="/delete_all">click here to delete all florders from history</a> <strong>|</strong>
-<a href="/users/<%=@user.id%>/edit">click here to edit account information</a> <strong>|</strong>
-<a href="/users/delete">click here to delete account</a>
+<a href="/orders/new">place new florder</a> <strong>|</strong>
+<a href="/delete_all">delete all florders from history</a> <strong>|</strong>
+<a href="/users/<%=@user.id%>/edit">edit account information</a> <strong>|</strong>
+<a href="/users/delete">delete account</a>

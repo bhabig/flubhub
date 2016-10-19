@@ -39,6 +39,7 @@ class UsersController < ApplicationController
   get '/user' do
     if logged_in?
       @user = current_user
+      @user.orders.each {|o| o.delete if o.items.empty?}
       erb :'users/show_user'
     else
       redirect '/login'

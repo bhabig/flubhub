@@ -24,33 +24,48 @@ class OrdersController < ApplicationController
 
   post '/orders' do
     @user = current_user
-    if params[:order]
-    	@order = Order.create(params[:order])
-      params[:order][:item_ids].each.with_index do |id, i|
-        if params[:quantity][id.to_i-1].to_i
-          (params[:quantity][id.to_i-1].to_i-1).times do
-            @order.items << Item.find_by_id(id)
+
+    if !params[:quantity].find{|q| q[/[a-zA-Z]+/]} && !params[:item][:quantity][/[a-zA-Z]+/]
+      if params[:order]
+      	@order = Order.create(params[:order])
+        params[:order][:item_ids].each.with_index do |id, i|
+          if params[:quantity][id.to_i-1].to_i >= 2
+            (params[:quantity][id.to_i-1].to_i-1).times do
+              @order.items << Item.find_by_id(id)
+            end
           end
         end
+      	if params[:ingredients] && params[:item][:quantity] == ""
+      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+        elsif params[:ingredients] && params[:item][:quantity] != ""
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+          params[:item][:quantity].to_i.times do
+            @order.items << item
+          end
+        elsif !params[:ingredients] && params[:item][:name] != ""
+          flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
+          redirect :"/orders/new"
+      	end
+      elsif params[:ingredients] && !params[:order]
+        @order = Order.create(user_id: @user.id)
+        if params[:ingredients] && params[:item][:quantity] == ""
+      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        elsif params[:ingredients] && params[:item][:quantity] != ""
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+          params[:item][:quantity].to_i.times do
+            @order.items << item
+          end
+        end
+      elsif !params[:order] && params[:item][:name] != "" && !params[:ingredients]
+        flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
+        redirect 'orders/new'
+      elsif !params[:ingredients] && !params[:order] && params[:item][:name] == ""
+        flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
+        redirect 'orders/new'
       end
-    	if params[:ingredients] && params[:item][:quantity] == ""
-    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-      elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-        params[:item][:quantity].to_i.times do
-          @order.items << item
-        end
-    	end
-    elsif params[:ingredients] && !params[:order]
-      @order = Order.create(user_id: @user.id)
-      if params[:ingredients] && params[:item][:quantity] == ""
-    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
-      elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
-        params[:item][:quantity].to_i.times do
-          @order.items << item
-        end
-    	end
+    else
+      flash[:message] = "Sorry #{@user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
+      redirect :"/orders/new"
     end
 
     @order.time_started
@@ -127,34 +142,49 @@ class OrdersController < ApplicationController
   patch '/orders/:id' do
     @user = current_user
     @order = Order.find_by_id(params[:id])
-    if params[:order]
-      params[:order][:item_ids].each.with_index do |id, i|
-        if params[:order_quantities][id.to_i-1].to_i >= 2
-          (params[:order_quantities][id.to_i-1].to_i).times do
+    if !params[:order_quantities].find{|q| q[/[a-zA-Z]+/]} && !params[:item][:quantity][/[a-zA-Z]+/]
+      if params[:order]
+        params[:order][:item_ids].each.with_index do |id, i|
+          if params[:order_quantities][id.to_i-1].to_i >= 2
+            (params[:order_quantities][id.to_i-1].to_i).times do
+              @order.items << Item.find_by_id(id)
+            end
+          else
             @order.items << Item.find_by_id(id)
           end
-        else
-            @order.items << Item.find_by_id(id)
         end
+        if params[:ingredients] && params[:item][:quantity] == ""
+      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+        elsif params[:ingredients] && params[:item][:quantity] != ""
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+          params[:item][:quantity].to_i.times do
+            @order.items << item
+          end
+        elsif !params[:ingredients] && params[:item][:name] != ""
+          flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
+          redirect :"/orders/#{@order.id}/continue_shopping"
+        end
+      elsif params[:ingredients] && !params[:order]
+        if params[:ingredients] && params[:item][:quantity] == ""
+          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+        elsif params[:ingredients] && params[:item][:quantity] != ""
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+          params[:item][:quantity].to_i.times do
+            @order.items << item
+          end
+        end
+      elsif !params[:order] && params[:item][:name] != "" && !params[:ingredients]
+        flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
+        redirect 'orders/new'
+      elsif !params[:ingredients] && !params[:order] && params[:item][:name] == ""
+        flash[:message] = "Sorry #{@user.username.capitalize}! You Have Not Selected Any Items To Add. Please Add Items Or Click 'Cancel Order'"
+        redirect :"/orders/#{@order.id}/continue_shopping"
       end
-      if params[:ingredients] && params[:item][:quantity] == ""
-    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-      elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-        params[:item][:quantity].to_i.times do
-          @order.items << item
-        end
-    	end
-    elsif params[:ingredients] && !params[:order]
-      if params[:ingredients] && params[:item][:quantity] == ""
-        @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-      elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-        params[:item][:quantity].to_i.times do
-          @order.items << item
-        end
-      end
+    else
+      flash[:message] = "Sorry #{@user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
+      redirect :"/orders/#{@order.id}/continue_shopping"
     end
+
     @order.total
     @order.save
 
@@ -165,22 +195,30 @@ class OrdersController < ApplicationController
 
     @order = Order.find_by_id(params[:captures][0].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
-    if @order && @item && params[:quantity].to_i >= 0
-      x = @order.items.map{|i| i.name}
-      @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
-      @order.items.delete(@item)
-      params[:quantity].to_i.times do
-        @order.items << @item
+
+    if !@order.items.empty?
+      if @order && @item && params[:quantity].to_i >= 0
+        x = @order.items.map{|i| i.name}
+        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
+        @order.items.delete(@item)
+        params[:quantity].to_i.times do
+          @order.items << @item
+          @order.save
+        end
+      elsif !params[:quantity]
+        x = @order.items.map{|i| i.name}
+        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
+        @order.items.delete(@item)
         @order.save
       end
-    elsif !params[:quantity]
-      x = @order.items.map{|i| i.name}
-      @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
-      @order.items.delete(@item)
-      @order.save
+      if @order.items.empty?
+        redirect "/orders/#{@order.id}/continue_shopping"
+      else
+        redirect "/orders/#{@order.id}"
+      end
     end
-    redirect "/orders/#{@order.id}"
   end
+
 
   get '/placed_order/:id' do
     if logged_in?
@@ -203,7 +241,7 @@ class OrdersController < ApplicationController
 
   delete '/orders/:id/delete' do
     @order = Order.find_by_id(params[:id])
-    @order.delete
+    @order.destroy
     redirect '/user'
   end
 
@@ -211,7 +249,7 @@ class OrdersController < ApplicationController
     if logged_in?
       @user = current_user
       @user.orders.clear
-      Order.all.map{|o| o.delete if o.user_id == @user.id}
+      Order.all.map{|o| o.destroy if o.user_id == @user.id}
       redirect '/user'
     else
       redirect '/login'
