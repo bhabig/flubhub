@@ -1,0 +1,10 @@
+<h1>Item:</h1>
+<% if Item.all[0..2].include?(@item) %>
+  <p><strong>Name: <%=@item.name%></strong> ($<%=@item.price%>)</p>
+  <p>{ <%= @item.ingredients %> }</p>
+  <a href="/orders/<%=@order.id%>">back</a>
+<% elsif @item %>
+  <p><strong>Name: <%=@item.name%></strong> ($<%=@item.price%>) <a href="/items/<%=@item.id%>/<%=@order.id%>/edit">edit item</a></p>
+  <p>{ <%= @item.ingredients %> }</p>
+  <a href="/orders/<%=@order.id%>">back</a>
+<% end %>

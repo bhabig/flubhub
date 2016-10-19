@@ -165,8 +165,7 @@ class OrdersController < ApplicationController
 
     @order = Order.find_by_id(params[:captures][0].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
-
-    if @order && @item
+    if @order && @item && params[:quantity].to_i >= 0
       x = @order.items.map{|i| i.name}
       @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
       @order.items.delete(@item)
@@ -174,6 +173,11 @@ class OrdersController < ApplicationController
         @order.items << @item
         @order.save
       end
+    elsif !params[:quantity]
+      x = @order.items.map{|i| i.name}
+      @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
+      @order.items.delete(@item)
+      @order.save
     end
     redirect "/orders/#{@order.id}"
   end

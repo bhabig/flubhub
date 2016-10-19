@@ -4,7 +4,7 @@
   <p><strong><%=@order.order_time%></strong></p>
   <h2>Items:</h2>
   <% @order.items.sort.uniq.each do |item| %>
-    <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p>
+    <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>/<%=@order.id%>">click to view item details</a></p>
     <p>Quantity: <%= @counts[item.name] %></p>
     <br>
   <% end %>
@@ -19,10 +19,12 @@
   <p><strong><%=@order.order_time%></strong></p>
   <h2>Items:</h2>
   <% @order.items.sort.uniq.each do |item| %>
-  <ul>
-    <li><p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>">click to view item details</a></p>
-    <p>Quantity: <%= @counts[item.name] %></p>
-  </ul>
+  <form action="/orders/<%=@order.id%>/<%=item.id%>/remove_from_order" method="POST">
+    <ul>
+      <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="submit" value="remove"></li>
+      <p>Quantity: <%=@counts[item.name]%></p>
+    </ul>
+  </form>
   <% end %>
   <p><strong>TOTAL: $<%=@order.total%></strong></p>
   <a href="/placed_order/<%=@order.id%>">Place Florder</a> <strong>|</strong>
