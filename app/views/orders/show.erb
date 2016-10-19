@@ -9,7 +9,7 @@
     <br>
   <% end %>
   <p><strong>TOTAL: $<%=@order.total%></strong></p>
-  <p>To Place This Order Again Click <a href="/orders/<%=@order.id%>/place_again">Here</a></p>
+  <p>To Place This Florder Again Click <a href="/orders/<%=@order.id%>/place_again">Here</a></p>
   <p>To Go Back To Florders Click <a href="/user">Here</a></p>
   <form method="post" action="/orders/<%=@order.id%>/delete">
     <input id="hidden" type="hidden" name="_method" value="DELETE">

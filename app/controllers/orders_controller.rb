@@ -36,9 +36,9 @@ class OrdersController < ApplicationController
           end
         end
       	if params[:ingredients] && params[:item][:quantity] == ""
-      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
         elsif params[:ingredients] && params[:item][:quantity] != ""
-          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
           params[:item][:quantity].to_i.times do
             @order.items << item
           end
@@ -49,9 +49,9 @@ class OrdersController < ApplicationController
       elsif params[:ingredients] && !params[:order]
         @order = Order.create(user_id: @user.id)
         if params[:ingredients] && params[:item][:quantity] == ""
-      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
         elsif params[:ingredients] && params[:item][:quantity] != ""
-          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
           params[:item][:quantity].to_i.times do
             @order.items << item
           end
@@ -61,7 +61,7 @@ class OrdersController < ApplicationController
         redirect 'orders/new'
       elsif !params[:ingredients] && !params[:order] && params[:item][:name] == ""
         flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
-        redirect 'orders/new'
+        redirect :'orders/new'
       end
     else
       flash[:message] = "Sorry #{@user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
@@ -76,10 +76,10 @@ class OrdersController < ApplicationController
     redirect :"/orders/#{@order.id}"
   end
 
-  get '/orders/:id' do
+  get '/orders/:order_id' do
     if logged_in?
       @user = current_user
-      @order = Order.find_by_id(params[:id])
+      @order = Order.find_by_id(params[:order_id])
       if @order.user_id == @user.id && !@order.items.empty?
         x = @order.items.map{|i| i.name}
         @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
@@ -93,10 +93,10 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:id/continue_shopping' do
+  get '/orders/:order_id/continue_shopping' do
     if logged_in?
       @user = current_user
-      @order = Order.find_by_id(params[:id])
+      @order = Order.find_by_id(params[:order_id])
       if @order.user_id == @user.id
         Item.sorter
         x = @order.items.map{|i| i.name}
@@ -108,10 +108,10 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:id/change_item_quantities' do
+  get '/orders/:order_id/change_item_quantities' do
     if logged_in?
       @user = current_user
-      @order = Order.find_by_id(params[:id])
+      @order = Order.find_by_id(params[:order_id])
       if @order.user_id == @user.id
         Item.sorter
         x = @order.items.map{|i| i.name}
@@ -123,9 +123,9 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:id/place_again' do
+  get '/orders/:order_id/place_again' do
     @user = current_user
-    order = Order.find_by_id(params[:id])
+    order = Order.find_by_id(params[:order_id])
     if order
       @order = Order.new(user_id: order.attributes[:user_id])
     end
@@ -139,9 +139,9 @@ class OrdersController < ApplicationController
     redirect :"/placed_order/#{@order.id}"
   end
 
-  patch '/orders/:id' do
+  patch '/orders/:order_id' do
     @user = current_user
-    @order = Order.find_by_id(params[:id])
+    @order = Order.find_by_id(params[:order_id])
     if !params[:order_quantities].find{|q| q[/[a-zA-Z]+/]} && !params[:item][:quantity][/[a-zA-Z]+/]
       if params[:order]
         params[:order][:item_ids].each.with_index do |id, i|
@@ -154,9 +154,9 @@ class OrdersController < ApplicationController
           end
         end
         if params[:ingredients] && params[:item][:quantity] == ""
-      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
         elsif params[:ingredients] && params[:item][:quantity] != ""
-          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
           params[:item][:quantity].to_i.times do
             @order.items << item
           end
@@ -191,7 +191,7 @@ class OrdersController < ApplicationController
     redirect "/orders/#{@order.id}"
   end
 
-  post '/orders/:id/:id/remove_from_order' do
+  post '/orders/:order_id/:item_id/remove_from_order' do
 
     @order = Order.find_by_id(params[:captures][0].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
@@ -220,10 +220,10 @@ class OrdersController < ApplicationController
   end
 
 
-  get '/placed_order/:id' do
+  get '/placed_order/:order_id' do
     if logged_in?
       @user = current_user
-      @order = Order.find_by_id(params[:id])
+      @order = Order.find_by_id(params[:order_id])
       if @order.total > 0
         @order.order_completed
         @order.save
@@ -239,8 +239,8 @@ class OrdersController < ApplicationController
   end
 
 
-  delete '/orders/:id/delete' do
-    @order = Order.find_by_id(params[:id])
+  delete '/orders/:order_id/delete' do
+    @order = Order.find_by_id(params[:order_id])
     @order.destroy
     redirect '/user'
   end
