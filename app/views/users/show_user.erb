@@ -12,7 +12,8 @@
       </ul>
     <% end %>
   <% end %>
-<% elsif !@user.orders.empty? && @user.orders.find{|o| o.order_placed == true} && !@user.orders.find{|o| o.items.empty?}%>
+<% end %>
+<% if !@user.orders.empty? && @user.orders.find{|o| o.order_placed == true} && !@user.orders.find{|o| o.items.empty?}%>
   <h2>Placed florders:</h2>
   <% @user.orders.each do |order| %>
     <% if order.order_placed == true %>
@@ -22,10 +23,12 @@
       </ul>
     <% end %>
   <% end %>
-<% else %>
+<% end %>
+<% if @user.orders.empty? %>
   <p><strong>Looks Like You Haven't Placed A Florder Yet! <a href="/orders/new">Click To Start Your First Florder</a></strong></p><br>
 <% end %>
 <a href="/orders/new">place new florder</a> <strong>|</strong>
 <a href="/delete_all">delete all florders from history</a> <strong>|</strong>
 <a href="/users/<%=@user.id%>/edit">edit account information</a> <strong>|</strong>
+<a href="/logout">log out</a> <strong>|</strong>
 <a href="/users/delete">delete account</a>
