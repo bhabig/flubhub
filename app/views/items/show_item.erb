@@ -4,7 +4,7 @@
   <p>{ <%= @item.ingredients %> }</p>
   <a href="/orders/<%=@order.id%>">back</a>
 <% elsif @item %>
-  <p><strong>Name: <%=@item.name%></strong> ($<%=@item.price%>) <a href="/items/<%=@item.id%>/<%=@order.id%>/edit">edit item</a></p>
+  <p><strong>Name: <%=@item.name%></strong> ($<%=@item.price%>) <a href="/items/<%=@order.id%>/<%=@item.id%>/edit">edit item</a></p>
   <p>{ <%= @item.ingredients %> }</p>
   <a href="/orders/<%=@order.id%>">back</a>
 <% end %>

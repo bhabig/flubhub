@@ -1,1 +1,33 @@
-xxxxx
+<form method="POST" action="/items/<%=@order.id%>/<%=@item.id%>">
+  <input type="hidden" name="_method" value="PATCH">
+  <h2>NAME: <input type="text" name="item[name]" value="<%=@item.name.gsub(" (your custom flurger)","")%>"></h2>
+  <h2>BUNS:</h2><br>
+  <%Item.buns.uniq.each do |bun|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=bun%>" value="<%=bun%>" <%='checked' if @item.ingredients.include?(bun)%>><strong><%=bun%></strong></input></li>
+    </ul>
+    <%end%>
+    <br></br>
+    <h2>MEATS:</h2><br>
+    <%Item.meats.uniq.each do |meat|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=meat%>" value="<%=meat%>" <%='checked' if @item.ingredients.include?(meat)%>><strong><%=meat%></strong></input></li>
+    </ul>
+    <%end%>
+  <br></br>
+  <h2>CHEESES:</h2><br>
+  <%Item.cheeses.uniq.each do |cheeses|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=cheeses%>" value="<%=cheeses%>" <%='checked' if @item.ingredients.include?(cheeses)%>><strong><%=cheeses%></strong></input></li>
+    </ul>
+  <%end%>
+  <br></br>
+  <h2>EXTRAS:</h2><br>
+  <%Item.extras.uniq.each do |extra|%>
+    <ul>
+      <li><input type="checkbox" name="ingredients[]" id="<%=extra%>" value="<%=extra%>" <%='checked' if @item.ingredients.include?(extra)%>><strong><%=extra%></strong></input></li>
+    </ul>
+  <%end%>
+  <br></br>
+  <input class="btn btn-primary" type="submit" value="edit">
+</form>

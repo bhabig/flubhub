@@ -4,7 +4,7 @@
   <p><strong><%=@order.order_time%></strong></p>
   <h2>Items:</h2>
   <% @order.items.sort.uniq.each do |item| %>
-    <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=item.id%>/<%=@order.id%>">click to view item details</a></p>
+    <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=@order.id%>/<%=item.id%>">click to view item details</a></p>
     <p>Quantity: <%= @counts[item.name] %></p>
     <br>
   <% end %>

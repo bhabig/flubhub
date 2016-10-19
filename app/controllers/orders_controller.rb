@@ -34,9 +34,9 @@ class OrdersController < ApplicationController
         end
       end
     	if params[:ingredients] && params[:item][:quantity] == ""
-    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
       elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
         params[:item][:quantity].to_i.times do
           @order.items << item
         end
@@ -138,18 +138,18 @@ class OrdersController < ApplicationController
         end
       end
       if params[:ingredients] && params[:item][:quantity] == ""
-    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+    		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
       elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
         params[:item][:quantity].to_i.times do
           @order.items << item
         end
     	end
     elsif params[:ingredients] && !params[:order]
       if params[:ingredients] && params[:item][:quantity] == ""
-        @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
       elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 10.99)
+        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
         params[:item][:quantity].to_i.times do
           @order.items << item
         end
