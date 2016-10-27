@@ -181,25 +181,32 @@ class OrdersController < ApplicationController
   helpers do #have work do to on message variety
     def missing_fields_check(existing_order=nil)
       @user = current_user
-      if !params[:order] && (params[:item][:name] != "" || !params[:quantity].reject{|q| q.empty?}.empty?) && !params[:ingredients]
-        flash_redirect_no_items(existing_order)
-      elsif !params[:ingredients] && !params[:order] && params[:item][:name] == "" && params[:quantity].reject{|q| q.empty?}.empty?
-        flash_redirect_no_items(existing_order)
-      end
+      flash_redirect_no_items(existing_order)
+      flash_redirect_no_ingredients(existing_order)
     end
 
     def flash_redirect_no_items(existing_order=nil)
-      if existing_order
-        flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
-        redirect "/orders/#{existing_order.id}/continue_shopping"
-      else
-        flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
-        redirect 'orders/new'
+      if (!params[:order] && (params[:item][:name] != "" || !params[:quantity].reject{|q| q.empty?}.empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order] && params[:item][:name] == "" && params[:quantity].reject{|q| q.empty?}.empty?)
+        if existing_order
+          flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
+          redirect "/orders/#{existing_order.id}/continue_shopping"
+        else
+          flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
+          redirect 'orders/new'
+        end
       end
     end
 
     def flash_redirect_no_ingredients(existing_order=nil)
-
+      if params[:item][:name] != "" || !params[:quantity].reject{|q| q.empty?}.empty?
+        if existing_order
+          flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients!"
+          redirect "/orders/#{existing_order.id}/continue_shopping"
+        else
+          flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients!"
+          redirect 'orders/new'
+        end
+      end
     end
   end
 end
