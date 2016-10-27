@@ -104,7 +104,7 @@ class OrdersController < ApplicationController
     user = current_user
     existing_order = Order.find_by_id(params[:order_id])
     instance_storage = []
-    missing_fields_check
+    missing_fields_check(existing_order)
     Order.post_or_patch_order(params, user, instance_storage, existing_order)
 
     instance_storage[0].total
@@ -140,7 +140,7 @@ class OrdersController < ApplicationController
   end
 
 
-  get '/placed_order/:order_id' do
+  get '/placed_order/:order_id' do #recheck what you're doing here? probably
     if logged_in?
       @user = current_user
       @order = Order.find_by_id(params[:order_id])
@@ -149,9 +149,11 @@ class OrdersController < ApplicationController
         @order.save
         flash[:message] = "Thank You #{@user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
         erb :'orders/completed_order'
+=begin
       else
         flash[:message] = "Thank You #{@user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
         redirect "/orders/#{@order.id}"
+=end
       end
     else
       redirect '/login'
@@ -176,16 +178,28 @@ class OrdersController < ApplicationController
     end
   end
 
-  helpers do
-    def missing_fields_check
+  helpers do #have work do to on message variety
+    def missing_fields_check(existing_order=nil)
       @user = current_user
-      if !params[:order] && params[:item][:name] != "" && !params[:ingredients]
-        flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
-        redirect 'orders/new'
-      elsif !params[:ingredients] && !params[:order] && params[:item][:name] == ""
+      if !params[:order] && (params[:item][:name] != "" || !params[:quantity].reject{|q| q.empty?}.empty?) && !params[:ingredients]
+        flash_redirect_no_items(existing_order)
+      elsif !params[:ingredients] && !params[:order] && params[:item][:name] == "" && params[:quantity].reject{|q| q.empty?}.empty?
+        flash_redirect_no_items(existing_order)
+      end
+    end
+
+    def flash_redirect_no_items(existing_order=nil)
+      if existing_order
+        flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
+        redirect "/orders/#{existing_order.id}/continue_shopping"
+      else
         flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
         redirect 'orders/new'
       end
+    end
+
+    def flash_redirect_no_ingredients(existing_order=nil)
+
     end
   end
 end
