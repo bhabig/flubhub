@@ -21,7 +21,7 @@ class Order < ActiveRecord::Base
     @user = user
 
     self.order_with_preset(params, instance_storage, existing_order)
-    self.custom_items_only(params, user, instance_storage)
+    self.custom_items_only(params, user, instance_storage, existing_order)
 
     @order.total_order
     @order.save
@@ -38,28 +38,39 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.create_order_add_items(params, instance_storage, existing_order=nil)#add logic or create new method for editings
-    if existing_order == nil
-      existing_order = Order.create(params[:order])
-      params[:order][:item_ids].each.with_index do |id, i| #redo this mendel's way - interpolation in the form where quantities[] is
-        if params[:quantity][id.to_i-1].to_i >= 2
-          (params[:quantity][id.to_i-1].to_i-1).times do
-            existing_order.items << Item.find_by_id(id)
-          end
-        end
-      end
-    else
-      params[:order][:item_ids].each.with_index do |id, i| #redo this mendel's way - interpolation in the form where quantities[] isy
-        if params[:quantity][i].to_i >= 2
-          params[:quantity][i].to_i.times do
-            existing_order.items << Item.find_by_id(id)
-          end
-        else
+  def self.create_new_order(params, instance_storage, existing_order_storage, existing_order=nil)
+    existing_order = Order.create(params[:order])
+    params[:order][:item_ids].each.with_index do |id, i| #redo this mendel's way - interpolation in the form where quantities[] is
+      if params[:quantity][id.to_i-1].to_i >= 2
+        (params[:quantity][id.to_i-1].to_i-1).times do
           existing_order.items << Item.find_by_id(id)
         end
       end
     end
-    @order = existing_order
+    existing_order_storage << existing_order
+  end
+
+  def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil)
+    params[:order][:item_ids].each.with_index do |id, i| #redo this mendel's way - interpolation in the form where quantities[] isy
+      if params[:quantity][i].to_i >= 2
+        params[:quantity][i].to_i.times do
+          existing_order.items << Item.find_by_id(id)
+        end
+      else
+        existing_order.items << Item.find_by_id(id)
+      end
+    end
+    existing_order_storage << existing_order
+  end
+
+  def self.create_order_add_items(params, instance_storage, existing_order=nil)#add logic or create new method for editings
+    existing_order_storage = []
+    if existing_order == nil
+      self.create_new_order(params, instance_storage, existing_order_storage, existing_order)
+    else
+      self.update_existing_order(params, instance_storage, existing_order_storage, existing_order)
+    end
+    @order = existing_order_storage[0]
     @order.save
     instance_storage << @order
   end
@@ -75,21 +86,34 @@ class Order < ActiveRecord::Base
     end
   end
 
-
-
-  def self.custom_items_only(params, user, instance_storage)
+  def self.custom_items_only(params, user, instance_storage, existing_order=nil)
     @user = user
-    if params[:ingredients] && !params[:order]
-      @order = Order.create(user_id: @user.id)
-      if params[:ingredients] && params[:item][:quantity] == ""
-        @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-      elsif params[:ingredients] && params[:item][:quantity] != ""
-        item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-        params[:item][:quantity].to_i.times do
-          @order.items << item
+    if existing_order == nil
+      if params[:ingredients] && !params[:order]
+        @order = Order.create(user_id: @user.id)
+        if params[:ingredients] && params[:item][:quantity] == ""
+          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+        elsif params[:ingredients] && params[:item][:quantity] != ""
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+          params[:item][:quantity].to_i.times do
+            @order.items << item
+          end
         end
+        instance_storage << @order
       end
-      instance_storage << @order
+    else
+      if params[:ingredients] && !params[:order]
+        if params[:ingredients] && params[:item][:quantity] == ""
+          existing_order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+        elsif params[:ingredients] && params[:item][:quantity] != ""
+          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+          params[:item][:quantity].to_i.times do
+            existing_order.items << item
+          end
+        end
+        @order = existing_order
+        instance_storage << @order
+      end
     end
   end
 
