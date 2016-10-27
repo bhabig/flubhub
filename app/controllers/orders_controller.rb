@@ -23,10 +23,21 @@ class OrdersController < ApplicationController
   end
 
   post '/orders' do
-    Order.post_new_order(params, session)
+    user = current_user
+    missing_fields_check
+    order = []
+    if Order.quantity_check(params) == true
+      Order.post_new_order(params, user, order)
+      order[0].time_started
+      @user.orders << order[0]
+    else
+      flash[:message] = "Sorry #{@user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
+      redirect "/orders/new"
+    end
+    redirect "/orders/#{order[0].id}"
   end
 
-  get '/orders/:order_id' do
+  get '/orders/:order_id' do #move logic to Order model (count method)
     if logged_in?
       @user = current_user
       @order = Order.find_by_id(params[:order_id])
@@ -43,7 +54,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:order_id/continue_shopping' do
+  get '/orders/:order_id/continue_shopping' do #move logic to Order model (count method)
     if logged_in?
       @user = current_user
       @order = Order.find_by_id(params[:order_id])
@@ -58,7 +69,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:order_id/change_item_quantities' do
+  get '/orders/:order_id/change_item_quantities' do #move logic to Order model (count mehtod)
     if logged_in?
       @user = current_user
       @order = Order.find_by_id(params[:order_id])
@@ -80,68 +91,29 @@ class OrdersController < ApplicationController
       @order = Order.new(user_id: order.attributes[:user_id])
     end
 
-    @order.time_started
-    @order.items << order.items
-    @order.total
-    @order.save
-    @user.orders << @order
-
-    redirect :"/placed_order/#{@order.id}"
+    @order.time_started                   #put
+    @order.items << order.items           #these
+    @order.total                          #in
+    @order.save                           #a
+    @user.orders << @order                #helper?
+                                          #^used in post /orders too
+    redirect "/placed_order/#{@order.id}"
   end
 
-  patch '/orders/:order_id' do
-    @user = current_user
-    @order = Order.find_by_id(params[:order_id])
-    if !params[:order_quantities].find{|q| q[/[a-zA-Z]+/]} && !params[:item][:quantity][/[a-zA-Z]+/]
-      if params[:order]
-        params[:order][:item_ids].each.with_index do |id, i|
-          if params[:order_quantities][id.to_i-1].to_i >= 2
-            (params[:order_quantities][id.to_i-1].to_i).times do
-              @order.items << Item.find_by_id(id)
-            end
-          else
-            @order.items << Item.find_by_id(id)
-          end
-        end
-        if params[:ingredients] && params[:item][:quantity] == ""
-      		@order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-        elsif params[:ingredients] && params[:item][:quantity] != ""
-          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-          params[:item][:quantity].to_i.times do
-            @order.items << item
-          end
-        elsif !params[:ingredients] && params[:item][:name] != ""
-          flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
-          redirect :"/orders/#{@order.id}/continue_shopping"
-        end
-      elsif params[:ingredients] && !params[:order]
-        if params[:ingredients] && params[:item][:quantity] == ""
-          @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-        elsif params[:ingredients] && params[:item][:quantity] != ""
-          item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11)
-          params[:item][:quantity].to_i.times do
-            @order.items << item
-          end
-        end
-      elsif !params[:order] && params[:item][:name] != "" && !params[:ingredients]
-        flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
-        redirect 'orders/new'
-      elsif !params[:ingredients] && !params[:order] && params[:item][:name] == ""
-        flash[:message] = "Sorry #{@user.username.capitalize}! You Have Not Selected Any Items To Add. Please Add Items Or Click 'Cancel Order'"
-        redirect :"/orders/#{@order.id}/continue_shopping"
-      end
-    else
-      flash[:message] = "Sorry #{@user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
-      redirect :"/orders/#{@order.id}/continue_shopping"
-    end
+  patch '/orders/:order_id' do #LOTS TO MOVE TO ORDER MODEL, BUT ALSO LOTS THAT CAN BE DONE WITH
+    user = current_user
+    edit = Order.find_by_id(params[:order_id])
+    order = []
 
-    @order.total
-    @order.save
+    Order.post_new_order(params, user, order)
 
-    redirect "/orders/#{@order.id}"
+    order[0].total
+    order[0].save
+
+    redirect "/orders/#{order[0].id}"
   end
 
-  post '/orders/:order_id/:item_id/remove_from_order' do
+  post '/orders/:order_id/:item_id/remove_from_order' do # logic to Order model
 
     @order = Order.find_by_id(params[:captures][0].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
@@ -181,7 +153,7 @@ class OrdersController < ApplicationController
         erb :'orders/completed_order'
       else
         flash[:message] = "Thank You #{@user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
-        redirect :"/orders/#{@order.id}"
+        redirect "/orders/#{@order.id}"
       end
     else
       redirect '/login'
@@ -203,6 +175,19 @@ class OrdersController < ApplicationController
       redirect '/user'
     else
       redirect '/login'
+    end
+  end
+
+  helpers do
+    def missing_fields_check
+      @user = current_user
+      if !params[:order] && params[:item][:name] != "" && !params[:ingredients]
+        flash[:message] = "Sorry #{@user.username.capitalize}! Your Custom Flurger Must Have Ingredients"
+        redirect 'orders/new'
+      elsif !params[:ingredients] && !params[:order] && params[:item][:name] == ""
+        flash[:message] = "Sorry #{@user.username.capitalize}! Your Florder Must Have Items!"
+        redirect 'orders/new'
+      end
     end
   end
 end
