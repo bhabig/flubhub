@@ -25,16 +25,16 @@ class OrdersController < ApplicationController
   post '/orders' do
     user = current_user
     missing_fields_check
-    order = []
+    instance_storage = []
     if Order.quantity_check(params) == true
-      Order.post_new_order(params, user, order)
-      order[0].time_started
-      @user.orders << order[0]
+      Order.post_or_patch_order(params, user, instance_storage)
+      instance_storage[0].time_started
+      @user.orders << instance_storage[0]
     else
       flash[:message] = "Sorry #{@user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
       redirect "/orders/new"
     end
-    redirect "/orders/#{order[0].id}"
+    redirect "/orders/#{instance_storage[0].id}"
   end
 
   get '/orders/:order_id' do #move logic to Order model (count method)
@@ -93,24 +93,23 @@ class OrdersController < ApplicationController
 
     @order.time_started                   #put
     @order.items << order.items           #these
-    @order.total                          #in
+    @order.total_order                          #in
     @order.save                           #a
     @user.orders << @order                #helper?
                                           #^used in post /orders too
     redirect "/placed_order/#{@order.id}"
   end
 
-  patch '/orders/:order_id' do #LOTS TO MOVE TO ORDER MODEL, BUT ALSO LOTS THAT CAN BE DONE WITH
+  patch '/orders/:order_id' do #LOTS TO MOVE TO ORDER MODEL, BUT ALSO LOTS THAT CAN BE DONE WITH METHODS BUILT FOR POST/ORDERS
     user = current_user
-    edit = Order.find_by_id(params[:order_id])
-    order = []
+    existing_order = Order.find_by_id(params[:order_id])
+    instance_storage = []
+    Order.post_or_patch_order(params, user, instance_storage, existing_order)
 
-    Order.post_new_order(params, user, order)
+    instance_storage[0].total
+    instance_storage[0].save
 
-    order[0].total
-    order[0].save
-
-    redirect "/orders/#{order[0].id}"
+    redirect "/orders/#{instance_storage[0].id}"
   end
 
   post '/orders/:order_id/:item_id/remove_from_order' do # logic to Order model
