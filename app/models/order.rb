@@ -86,7 +86,7 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.custom_items_only(params, user, instance_storage, existing_order=nil)
+  def self.custom_items_only(params, user, instance_storage, existing_order=nil) #break this down and clean it up!
     @user = user
     if existing_order == nil
       if params[:ingredients] && !params[:order]

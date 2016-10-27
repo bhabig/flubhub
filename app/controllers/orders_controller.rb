@@ -100,10 +100,11 @@ class OrdersController < ApplicationController
     redirect "/placed_order/#{@order.id}"
   end
 
-  patch '/orders/:order_id' do #LOTS TO MOVE TO ORDER MODEL, BUT ALSO LOTS THAT CAN BE DONE WITH METHODS BUILT FOR POST/ORDERS
+  patch '/orders/:order_id' do
     user = current_user
     existing_order = Order.find_by_id(params[:order_id])
     instance_storage = []
+    missing_fields_check
     Order.post_or_patch_order(params, user, instance_storage, existing_order)
 
     instance_storage[0].total
@@ -113,10 +114,8 @@ class OrdersController < ApplicationController
   end
 
   post '/orders/:order_id/:item_id/remove_from_order' do # logic to Order model
-
     @order = Order.find_by_id(params[:captures][0].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
-
     if !@order.items.empty?
       if @order && @item && params[:quantity].to_i >= 0
         x = @order.items.map{|i| i.name}
