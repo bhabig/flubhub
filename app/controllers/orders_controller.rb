@@ -23,13 +23,13 @@ class OrdersController < ApplicationController
   end
 
   post '/orders' do
-    user = current_user
-    missing_fields_check
+    current_user
+    missing_fields_check(existing_order)
     instance_storage = []
     if Order.quantity_check(params) == true
-      Order.post_or_patch_order(params, user, instance_storage)
+      Order.post_or_patch_order(params, current_user, instance_storage)
       instance_storage[0].time_started
-      @user.orders << instance_storage[0]
+      current_user.orders << instance_storage[0]
     else
       flash[:message] = "Sorry #{@user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
       redirect "/orders/new"
@@ -39,7 +39,7 @@ class OrdersController < ApplicationController
 
   get '/orders/:order_id' do #move logic to Order model (count method)
     if logged_in?
-      @user = current_user
+      current_user
       @order = Order.find_by_id(params[:order_id])
       if @order.user_id == @user.id && !@order.items.empty?
         x = @order.items.map{|i| i.name}
@@ -56,9 +56,9 @@ class OrdersController < ApplicationController
 
   get '/orders/:order_id/continue_shopping' do #move logic to Order model (count method)
     if logged_in?
-      @user = current_user
+      current_user
       @order = Order.find_by_id(params[:order_id])
-      if @order.user_id == @user.id
+      if @order.user_id == current_user.id
         Item.sorter
         x = @order.items.map{|i| i.name}
         @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
@@ -71,9 +71,9 @@ class OrdersController < ApplicationController
 
   get '/orders/:order_id/change_item_quantities' do #move logic to Order model (count mehtod)
     if logged_in?
-      @user = current_user
+      current_user
       @order = Order.find_by_id(params[:order_id])
-      if @order.user_id == @user.id
+      if @order.user_id == current_user.id
         Item.sorter
         x = @order.items.map{|i| i.name}
         @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
@@ -85,7 +85,7 @@ class OrdersController < ApplicationController
   end
 
   get '/orders/:order_id/place_again' do
-    @user = current_user
+    current_user
     order = Order.find_by_id(params[:order_id])
     if order
       @order = Order.new(user_id: order.attributes[:user_id])
@@ -105,7 +105,7 @@ class OrdersController < ApplicationController
     existing_order = Order.find_by_id(params[:order_id])
     instance_storage = []
     missing_fields_check(existing_order)
-    Order.post_or_patch_order(params, user, instance_storage, existing_order)
+    Order.post_or_patch_order(params, current_user, instance_storage, existing_order)
 
     instance_storage[0].total
     instance_storage[0].save
@@ -149,11 +149,6 @@ class OrdersController < ApplicationController
         @order.save
         flash[:message] = "Thank You #{@user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
         erb :'orders/completed_order'
-=begin
-      else
-        flash[:message] = "Thank You #{@user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
-        redirect "/orders/#{@order.id}"
-=end
       end
     else
       redirect '/login'
@@ -169,9 +164,9 @@ class OrdersController < ApplicationController
 
   get '/delete_all' do
     if logged_in?
-      @user = current_user
-      @user.orders.clear
-      Order.all.map{|o| o.destroy if o.user_id == @user.id}
+      current_user
+      current_user.orders.clear
+      Order.all.map{|o| o.destroy if o.user_id == current_user.id}
       redirect '/user'
     else
       redirect '/login'
@@ -180,7 +175,7 @@ class OrdersController < ApplicationController
 
   helpers do #have work do to on message variety
     def missing_fields_check(existing_order=nil)
-      @user = current_user
+      current_user
       flash_redirect_no_items(existing_order)
       flash_redirect_no_ingredients(existing_order)
     end
