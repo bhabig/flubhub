@@ -26,7 +26,7 @@ class OrdersController < ApplicationController
       instance_storage[0].time_started
       current_user.orders << instance_storage[0]
     else
-      flash[:message] = flash_messages[3]
+      flash[:message] = invalid_quantity_flash(current_user)
       redirect "/orders/new"
     end
     redirect "/orders/#{instance_storage[0].id}"
@@ -134,7 +134,7 @@ class OrdersController < ApplicationController
       if @order.total > 0
         @order.order_completed
         @order.save
-        flash[:message] = flash_messages[2]
+        flash[:message] = completed_order_flash(current_user)
         erb :'orders/completed_order'
       end
     end
@@ -165,10 +165,10 @@ class OrdersController < ApplicationController
     def flash_redirect_no_items(existing_order=nil)
       if (!params[:order] && (params[:item][:name] != "" || !params[:item][:quantity].empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order] && params[:item][:name] == "" && params[:quantity].reject{|q| q.empty?}.empty?)
         if existing_order
-          flash[:message] = flash_messages[1]
+          flash[:message] = empty_order_flash(current_user)
           redirect "/orders/#{existing_order.id}/continue_shopping"
         else
-          flash[:message] = flash_messages[1]
+          flash[:message] = empty_order_flash(current_user)
           redirect 'orders/new'
         end
       end
@@ -177,15 +177,29 @@ class OrdersController < ApplicationController
     def flash_redirect_no_ingredients(existing_order=nil)
       if !params[:ingredients] && params[:item][:name] != "" && params[:item][:quantity].empty? || !params[:ingredients] && params[:item][:name] == "" && !params[:item][:quantity].empty? || !params[:ingredients] && params[:item][:name] != "" && !params[:item][:quantity].empty?
         if existing_order
-          flash[:message] = flash_messages[0]
+          flash[:message] = missed_something_flash(current_user)
           redirect "/orders/#{existing_order.id}/continue_shopping"
         else
-          flash[:message] = flash_messages[0]
+          flash[:message] = missed_something_flash(current_user)
           redirect 'orders/new'
         end
       end
     end
 
+    def missed_something_flash(current_user=nil)
+      "Sorry #{current_user.username.capitalize}! It looks like you didn't fill something in correctly."
+    end
+
+    def empty_order_flash(current_user=nil)
+      "Sorry #{current_user.username.capitalize}! Your Florder Must Have Items!"
+    end
+
+    def completed_order_flash(current_user=nil)
+      "Thank You #{current_user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
+    end
+
+    def invalid_quantity_flash(current_user=nil)
+      "Sorry #{current_user.username.capitalize}! Quantity must be a whole number greater than or equal to two."
+    end
   end
-  flash_messages = ["Sorry #{current_user.username.capitalize}! It looks like you didn't fill something in correctly.", "Sorry #{current_user.username.capitalize}! Your Florder Must Have Items!", "Thank You #{current_user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!", "Sorry #{current_user.username.capitalize}! Quantity must be a whole number greater than or equal to two."]
 end
