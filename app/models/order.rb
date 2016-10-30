@@ -19,7 +19,7 @@ class Order < ActiveRecord::Base
 
   def self.post_or_patch_order(params, current_user, instance_storage, existing_order=nil)
     self.order_with_preset(params, instance_storage, existing_order)
-    self.custom_items_only(params, user, instance_storage, existing_order)
+    self.custom_items_only(params, current_user, instance_storage, existing_order)
 
     @order.total_order
     @order.save

@@ -175,12 +175,12 @@ class OrdersController < ApplicationController
     end
 
     def flash_redirect_no_ingredients(existing_order=nil)
-      if !params[:order] && (params[:item][:name] != "" || !params[:item][:quantity].empty?)
+      if !params[:ingredients] && params[:item][:name] != "" && params[:item][:quantity].empty? || !params[:ingredients] && params[:item][:name] == "" && !params[:item][:quantity].empty? || !params[:ingredients] && params[:item][:name] != "" && !params[:item][:quantity].empty?
         if existing_order
-          flash[:message] = "Sorry #{current_user.username.capitalize}! It didn't fill something in correctly."
+          flash[:message] = "Sorry #{current_user.username.capitalize}! It looks like you didn't fill something in correctly."
           redirect "/orders/#{existing_order.id}/continue_shopping"
         else
-          flash[:message] = "Sorry #{current_user.username.capitalize}! It didn't fill something in correctly."
+          flash[:message] = "Sorry #{current_user.username.capitalize}! It looks like you didn't fill something in correctly."
           redirect 'orders/new'
         end
       end
