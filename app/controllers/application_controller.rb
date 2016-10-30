@@ -26,6 +26,13 @@ class ApplicationController < Sinatra::Base
       !!session[:user_id]
     end
 
+    def find_order_match_user_id(extra_criteria=nil, current_user=nil)
+      @order = Order.find_by_id(params[:order_id])
+      if @order.user_id == @user.id && extra_criteria
+        yield
+      end
+    end
+
 		def check_logged_in(&block)
 	    if logged_in?
         current_user

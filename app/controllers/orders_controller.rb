@@ -34,22 +34,21 @@ class OrdersController < ApplicationController
 
   get '/orders/:order_id' do #move logic to Order model (count method)
     check_logged_in do
-      @order = Order.find_by_id(params[:order_id])
-      if @order.user_id == @user.id && !@order.items.empty?
-        x = @order.items.map{|i| i.name}
-        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
-
-        erb :'orders/show'
-      else
-        redirect '/user'
+      find_order_match_user_id(current_user) do
+        if !@order.items.empty?
+          x = @order.items.map{|i| i.name}
+          @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
+          erb :'orders/show'
+        else
+          redirect '/user'
+        end
       end
     end
   end
 
   get '/orders/:order_id/continue_shopping' do #move logic to Order model (count method)
     check_logged_in do
-      @order = Order.find_by_id(params[:order_id])
-      if @order.user_id == current_user.id
+      find_order_match_user_id(current_user) do
         Item.sorter
         x = @order.items.map{|i| i.name}
         @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
@@ -60,8 +59,7 @@ class OrdersController < ApplicationController
 
   get '/orders/:order_id/change_item_quantities' do #move logic to Order model (count mehtod)
     check_logged_in do
-      @order = Order.find_by_id(params[:order_id])
-      if @order.user_id == current_user.id
+      find_order_match_user_id(current_user) do
         Item.sorter
         x = @order.items.map{|i| i.name}
         @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
@@ -72,18 +70,19 @@ class OrdersController < ApplicationController
 
   get '/orders/:order_id/place_again' do
     check_logged_in do
-      order = Order.find_by_id(params[:order_id])
-      if order
-        @order = Order.new(user_id: order.attributes[:user_id])
-      end
+      find_order_match_user_id(current_user) do
+        if @order
+          @order_again = Order.new(user_id: @order.attributes[:user_id])
+        end
 
-      @order.time_started                   #put
-      @order.items << order.items           #these
-      @order.total_order                          #in
-      @order.save                           #a
-      current_user.orders << @order                #helper?
-                                            #^used in post /orders too
-      redirect "/placed_order/#{@order.id}"
+        @order_again.time_started                   #put
+        @order_again.items << @order.items           #these
+        @order_again.total_order                          #in
+        @order_again.save                           #a
+        current_user.orders << @order_again                #helper?
+                                          #^used in post /orders too
+        redirect "/placed_order/#{@order_again.id}"
+      end
     end
   end
 
@@ -94,7 +93,7 @@ class OrdersController < ApplicationController
       missing_fields_check(existing_order)
       if Order.quantity_check(params) == true
         Order.post_or_patch_order(params, current_user, instance_storage, existing_order)
-        instance_storage[0].total
+        instance_storage[0].total_order
         instance_storage[0].save
         redirect "/orders/#{instance_storage[0].id}"
       else
@@ -115,14 +114,14 @@ class OrdersController < ApplicationController
         @order.items.delete(@item)
         params[:quantity].to_i.times do
           @order.items << @item
-          @order.save
         end
       elsif !params[:quantity]
         x = @order.items.map{|i| i.name}
         @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
         @order.items.delete(@item)
-        @order.save
       end
+      @order.total_order
+      @order.save
       if @order.items.empty?
         redirect "/orders/#{@order.id}/continue_shopping"
       else
@@ -131,24 +130,24 @@ class OrdersController < ApplicationController
     end
   end
 
-
   get '/placed_order/:order_id' do #recheck what you're doing here? probably
     check_logged_in do
-      @order = Order.find_by_id(params[:order_id])
-      if @order.total > 0
-        @order.order_completed
-        @order.save
-        completed_order_flash(current_user)
-        erb :'orders/completed_order'
+      find_order_match_user_id(current_user) do
+        if @order.total > 0
+          @order.order_completed
+          @order.save
+          completed_order_flash(current_user)
+          erb :'orders/completed_order'
+        end
       end
     end
   end
 
-
   delete '/orders/:order_id/delete' do
-    @order = Order.find_by_id(params[:order_id])
-    @order.destroy
-    redirect '/user'
+    find_order_match_user_id(current_user) do
+      @order.destroy
+      redirect '/user'
+    end
   end
 
   get '/delete_all' do
@@ -199,7 +198,7 @@ class OrdersController < ApplicationController
     end
 
     def completed_order_flash(current_user=nil)
-      flash[:message] = "Thank You #{current_user.username.capitalize}! Your Order Has Successfully Been Placed. You Can Expect Your Order In 30 - 45 Minutes!"
+      flash[:message] = "Thank You #{current_user.username.capitalize}! Your order has been successfully placed. You Can Expect Your Order In 30 - 45 Minutes!"
     end
 
     def invalid_quantity_flash(current_user=nil)

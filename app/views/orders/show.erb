@@ -22,6 +22,7 @@
   <form action="/orders/<%=@order.id%>/<%=item.id%>/remove_from_order" method="POST">
     <ul>
       <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="submit" value="remove"></li>
+      <p><a href="/items/<%=@order.id%>/<%=item.id%>">click to view item details</a></p>
       <p>Quantity: <%=@counts[item.name]%></p>
     </ul>
   </form>

@@ -46,7 +46,8 @@
   <br></br>
   <p>Too hungry for just one? How many would you like?<input type="text" name="item[quantity]" placeholder="quantity"></p>
   <input class="btn btn-primary" type="submit" value="Add To Florder">
-  </form> <strong>|</strong> <form method="post" action="/orders/<%=@order.id%>/delete">
+</form><br><form method="post" action="/orders/<%=@order.id%>/delete">
                                <input id="hidden" type="hidden" name="_method" value="DELETE">
                                <input type="submit" value="Cancel Florder">
-                             </form>
+                             </form><br>
+<a href="/orders/<%=@order.id%>">back to order</a>
