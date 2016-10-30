@@ -37,52 +37,40 @@ class UsersController < ApplicationController
   end
 
   get '/user' do
-    if logged_in?
-      @user = current_user
+    check_logged_in do
       @user.orders.each {|o| o.delete if o.items.empty?}
       erb :'users/show_user'
-    else
-      redirect '/login'
     end
   end
 
 
   get '/users/:id/edit' do
-    if logged_in?
-      @user = current_user
+    check_logged_in do
       erb :'users/edit_user'
     end
   end
 
   patch '/users/:id' do
-    if logged_in?
-      @user = current_user
+    check_logged_in do
       @user.update(username: params[:username]) unless params[:username].empty?
       @user.update(email: params[:email]) unless params[:email].empty?
       @user.update(password: params[:password]) unless params[:password].empty?
       redirect '/user'
-    else
-      redirect '/login'
     end
   end
 
   get '/logout' do
-    if logged_in?
+    check_logged_in do
       session.destroy
-      redirect '/'
-    else
       redirect '/'
     end
   end
 
   get '/users/delete' do
-    if logged_in?
-      @user = current_user
+    check_logged_in do
       session.destroy
       @user.destroy
       redirect '/signup'
-    else
-      redirect '/login'
     end
   end
 end

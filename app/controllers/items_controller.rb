@@ -1,24 +1,19 @@
 class ItemsController < ApplicationController
 
   get '/items/:order_id/:item_id' do
-    if logged_in?
-      @user = current_user
+    check_logged_in do
       @order = Order.find_by_id(params[:captures][0].to_i)
       @item = Item.find_by_id(params[:item_id])
       erb :'items/show_item'
-    else
-      redirect '/login'
     end
   end
 
   get '/items/:order_id/:item_id/edit' do
-    if logged_in?
+    check_logged_in do
       @order = Order.find_by_id(params[:captures][0].to_i)
       @item = Item.find_by_id(params[:item_id])
       Item.sorter
       erb :'items/edit_custom_item'
-    else
-      redirect '/login'
     end
   end
 

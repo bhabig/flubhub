@@ -25,5 +25,14 @@ class ApplicationController < Sinatra::Base
     def logged_in?
       !!session[:user_id]
     end
+
+		def check_logged_in(&block)
+	    if logged_in?
+        current_user
+		    yield
+	    else
+		    redirect '/login'
+	    end
+    end
   end
 end

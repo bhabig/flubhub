@@ -17,9 +17,7 @@ class Order < ActiveRecord::Base
     self.order_placed = true
   end
 
-  def self.post_or_patch_order(params, user, instance_storage, existing_order=nil)
-    @user = user
-
+  def self.post_or_patch_order(params, current_user, instance_storage, existing_order=nil)
     self.order_with_preset(params, instance_storage, existing_order)
     self.custom_items_only(params, user, instance_storage, existing_order)
 
