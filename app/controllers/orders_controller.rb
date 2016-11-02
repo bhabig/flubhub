@@ -18,17 +18,21 @@ class OrdersController < ApplicationController
   end
 
   post '/orders' do
+    binding.pry
     current_user
     instance_storage = []
+    Order.post_or_patch_order(params, current_user, instance_storage)
+    instance_storage[0].time_started
+    current_user.orders << instance_storage[0]
+=begin
     if Order.quantity_check(params) == true
       missing_fields_check
-      Order.post_or_patch_order(params, current_user, instance_storage)
-      instance_storage[0].time_started
-      current_user.orders << instance_storage[0]
+
     else
       invalid_quantity_flash(current_user)
       redirect "/orders/new"
     end
+=end
     redirect "/orders/#{instance_storage[0].id}"
   end
 

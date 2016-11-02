@@ -26,6 +26,9 @@ class Order < ActiveRecord::Base
     instance_storage << @order
   end
 
+  def item_attributes=(params)
+  end
+
   def self.order_with_preset(params, instance_storage, existing_order=nil)#add logic to use new edit method?
     if params[:order]
       self.create_order_add_items(params, instance_storage, existing_order)
