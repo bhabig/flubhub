@@ -6,9 +6,8 @@
   <p><strong>Choose From Our List of Existing Items</strong></p>
   <%Item.all[0..2].each do |item|%>
     <ul>
-      <li><input type="checkbox" name="order[item_attributes][][id]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%> | </strong> (Too hungry for just one? <input type="text" name="amount" id="<%=item.id%>" placeholder="enter quantity (2 or higher)">)</input></li>
+      <li><input type="checkbox" name="order[item_attributes][<%=item.id%>][id]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%> </strong> (Too hungry for just one? <input type="text" name="order[item_attributes][<%=item.id%>][amount]" id="<%=item.id%>" value="1" placeholder="enter quantity (2 or higher)">)</input></li>
       <p>{ <%= item.ingredients %> }</p>
-
       <br></br>
     </ul>
   <%end%>
