@@ -27,6 +27,10 @@ class Order < ActiveRecord::Base
   end
 
   def item_attributes=(params)
+    params.each do |k, v|
+      #if v[:id] && v[:amount] is valid?
+      self.quantities.build(item_id: v["id"], amount: v )
+    end
   end
 
   def self.order_with_preset(params, instance_storage, existing_order=nil)#add logic to use new edit method?
