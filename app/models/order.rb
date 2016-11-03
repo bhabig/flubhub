@@ -18,8 +18,8 @@ class Order < ActiveRecord::Base
   end
 
   def self.post_or_patch_order(params, current_user, instance_storage, existing_order=nil)
-    self.order_with_preset(params, instance_storage, existing_order)
-    self.custom_items_only(params, current_user, instance_storage, existing_order)
+    self.order_with_preset(params, instance_storage, existing_order, current_user)
+    self.custom_items_only(params, instance_storage, existing_order, current_user)
 
     @order.total_order
     @order.save
@@ -27,15 +27,24 @@ class Order < ActiveRecord::Base
   end
 
   def item_attributes=(params)
+    @q = []
     params.each do |k, v|
-      #if v[:id] && v[:amount] is valid?
-      self.quantities.build(item_id: v["id"], amount: v )
+      if v["amount"] != 0 && !v["amount"][/[a-zA-Z]+/] && v["id"]
+        if v["amount"] == ""
+          v["amount"] = 1
+        end
+        @q << self.quantities.build(item_id: v["id"].to_i, amount: v["amount"].to_i)
+      end
     end
   end
 
-  def self.order_with_preset(params, instance_storage, existing_order=nil)#add logic to use new edit method?
+  def item_attributes
+    @q
+  end
+
+  def self.order_with_preset(params, instance_storage, existing_order=nil, current_user)#add logic to use new edit method?
     if params[:order]
-      self.create_order_add_items(params, instance_storage, existing_order)
+      self.create_order_add_items(params, instance_storage, existing_order, current_user)
       self.add_customs(params)
       if !params[:ingredients] && params[:item][:name] != ""
         return false
@@ -43,19 +52,22 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.create_new_order(params, instance_storage, existing_order_storage, existing_order=nil)
+  def self.create_new_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
     existing_order = Order.create(params[:order])
-    params[:order][:item_ids].each.with_index do |id, i| #redo this mendel's way - interpolation in the form where quantities[] is
-      if params[:quantity][id.to_i-1].to_i >= 2
-        (params[:quantity][id.to_i-1].to_i-1).times do
-          existing_order.items << Item.find_by_id(id)
+    binding.pry
+    existing_order.item_attributes.each do |q|
+      if q.order_id == existing_order.id
+        item = Item.find_by_id(q.item_id)
+        q.amount.to_i.times do
+          existing_order.items << item if item
         end
       end
     end
+    existing_order.save
     existing_order_storage << existing_order
   end
 
-  def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil)
+  def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
     params[:order][:item_ids].each.with_index do |id, i| #redo this mendel's way - interpolation in the form where quantities[] isy
       if params[:quantity][i].to_i >= 2
         params[:quantity][i].to_i.times do
@@ -68,12 +80,12 @@ class Order < ActiveRecord::Base
     existing_order_storage << existing_order
   end
 
-  def self.create_order_add_items(params, instance_storage, existing_order=nil)#add logic or create new method for editings
+  def self.create_order_add_items(params, instance_storage, existing_order=nil, current_user)#add logic or create new method for editings
     existing_order_storage = []
     if existing_order == nil
-      self.create_new_order(params, instance_storage, existing_order_storage, existing_order)
+      self.create_new_order(params, instance_storage, existing_order_storage, existing_order, current_user)
     else
-      self.update_existing_order(params, instance_storage, existing_order_storage, existing_order)
+      self.update_existing_order(params, instance_storage, existing_order_storage, existing_order, current_user)
     end
     @order = existing_order_storage[0]
     @order.save
@@ -91,8 +103,7 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.custom_items_only(params, user, instance_storage, existing_order=nil) #break this down and clean it up!
-    @user = user
+  def self.custom_items_only(params, current_user, instance_storage, existing_order=nil) #break this down and clean it up!
     if existing_order == nil
       if params[:ingredients] && !params[:order]
         @order = Order.create(user_id: @user.id)
@@ -123,6 +134,6 @@ class Order < ActiveRecord::Base
   end
 
   def self.quantity_check(params)
-    !params[:quantity].find{|q| q[/[a-zA-Z]+/]} && !params[:item][:quantity][/[a-zA-Z]+/] ? true : false
+    !params[:quantity].find{|q| q[/[a-zA-Z]+/]} && !params[:order][:item_attributes][:amount][/[a-zA-Z]+/] ? true : false
   end
 end
