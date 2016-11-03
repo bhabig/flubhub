@@ -54,12 +54,12 @@ class Order < ActiveRecord::Base
 
   def self.create_new_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
     existing_order = Order.create(params[:order])
-    binding.pry
+    existing_order.items.clear
     existing_order.item_attributes.each do |q|
       if q.order_id == existing_order.id
         item = Item.find_by_id(q.item_id)
-        q.amount.to_i.times do
-          existing_order.items << item if item
+        q.amount.times do
+          existing_order.items << item
         end
       end
     end

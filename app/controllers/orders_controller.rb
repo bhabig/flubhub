@@ -18,7 +18,6 @@ class OrdersController < ApplicationController
   end
 
   post '/orders' do
-    binding.pry
     current_user
     instance_storage = []
     Order.post_or_patch_order(params, current_user, instance_storage)
