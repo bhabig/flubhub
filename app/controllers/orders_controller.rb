@@ -20,18 +20,15 @@ class OrdersController < ApplicationController
   post '/orders' do
     current_user
     instance_storage = []
-    Order.post_or_patch_order(params, current_user, instance_storage)
-    instance_storage[0].time_started
-    current_user.orders << instance_storage[0]
-=begin
     if Order.quantity_check(params) == true
       missing_fields_check
-
+      Order.post_or_patch_order(params, current_user, instance_storage)
+      instance_storage[0].time_started
+      current_user.orders << instance_storage[0]
     else
       invalid_quantity_flash(current_user)
       redirect "/orders/new"
     end
-=end
     redirect "/orders/#{instance_storage[0].id}"
   end
 
@@ -77,7 +74,6 @@ class OrdersController < ApplicationController
         if @order
           @order_again = Order.new(user_id: @order.attributes[:user_id])
         end
-
         @order_again.time_started                   #put
         @order_again.items << @order.items           #these
         @order_again.total_order                          #in
@@ -169,7 +165,7 @@ class OrdersController < ApplicationController
     end
 
     def flash_redirect_no_items(existing_order=nil)
-      if (!params[:order] && (params[:item][:name] != "" || !params[:item][:quantity].empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order] && params[:item][:name] == "" && params[:quantity].reject{|q| q.empty?}.empty?)
+      if (!params[:order] && (params[:item][:name] != "" || !params[:item][:item_attributes][:amount].empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order] && params[:item][:name] == "" && params[:item][:item_attributes][:amount].reject{|q| q.empty?}.empty?)
         if existing_order
           empty_order_flash(current_user)
           redirect "/orders/#{existing_order.id}/continue_shopping"
@@ -181,7 +177,7 @@ class OrdersController < ApplicationController
     end
 
     def flash_redirect_no_ingredients(existing_order=nil)
-      if !params[:ingredients] && params[:item][:name] != "" && params[:item][:quantity].empty? || !params[:ingredients] && params[:item][:name] == "" && !params[:item][:quantity].empty? || !params[:ingredients] && params[:item][:name] != "" && !params[:item][:quantity].empty?
+      if !params[:ingredients] && params[:item][:name] != "" && params[:item][:item_attributes][:amount].empty? || !params[:ingredients] && params[:item][:name] == "" && !params[:item][:item_attributes][:amount].empty? || !params[:ingredients] && params[:item][:name] != "" && !params[:item][:quantity].empty?
         if existing_order
           missed_something_flash(current_user)
           redirect "/orders/#{existing_order.id}/continue_shopping"

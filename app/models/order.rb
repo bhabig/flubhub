@@ -42,6 +42,19 @@ class Order < ActiveRecord::Base
     @q
   end
 
+  def self.quantity(existing_order)
+    existing_order.item_attributes.each do |q|
+      if q.order_id == existing_order.id
+        item = Item.find_by_id(q.item_id)
+        if q.amount.to_i-1 > 0
+          (q.amount.to_i-1).times do
+            existing_order.items << item
+          end
+        end
+      end
+    end
+  end
+
   def self.order_with_preset(params, instance_storage, existing_order=nil, current_user)#add logic to use new edit method?
     if params[:order]
       self.create_order_add_items(params, instance_storage, existing_order, current_user)
@@ -54,30 +67,20 @@ class Order < ActiveRecord::Base
 
   def self.create_new_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
     existing_order = Order.create(params[:order])
-    existing_order.items.clear
-    existing_order.item_attributes.each do |q|
-      if q.order_id == existing_order.id
-        item = Item.find_by_id(q.item_id)
-        q.amount.times do
-          existing_order.items << item
-        end
-      end
-    end
+    self.quantity(existing_order)
     existing_order.save
     existing_order_storage << existing_order
   end
 
   def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
-    params[:order][:item_ids].each.with_index do |id, i| #redo this mendel's way - interpolation in the form where quantities[] isy
-      if params[:quantity][i].to_i >= 2
-        params[:quantity][i].to_i.times do
-          existing_order.items << Item.find_by_id(id)
-        end
-      else
-        existing_order.items << Item.find_by_id(id)
-      end
+    if params[:order]
+      existing_order.update(params[:order])
+      self.quantity(existing_order)
+      existing_order.save
+      existing_order_storage << existing_order
+    elsif #what is this for again?
+      existing_order_storage << existing_order
     end
-    existing_order_storage << existing_order
   end
 
   def self.create_order_add_items(params, instance_storage, existing_order=nil, current_user)#add logic or create new method for editings
@@ -93,11 +96,11 @@ class Order < ActiveRecord::Base
   end
 
   def self.add_customs(params)#works as is for edit
-    if params[:ingredients] && params[:item][:quantity] == ""
+    if params[:ingredients] && params[:item][:item_attributes][:amount] == ""
       @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-    elsif params[:ingredients] && params[:item][:quantity] != ""
+    elsif params[:ingredients] && params[:item][:item_attributes][:amount] != ""
       item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-      params[:item][:quantity].to_i.times do
+      params[:item][:item_attributes][:amount].to_i.times do
         @order.items << item
       end
     end
@@ -134,6 +137,6 @@ class Order < ActiveRecord::Base
   end
 
   def self.quantity_check(params)
-    !params[:quantity].find{|q| q[/[a-zA-Z]+/]} && !params[:order][:item_attributes][:amount][/[a-zA-Z]+/] ? true : false
+    !params[:item][:item_attributes][:amount][/[a-zA-Z]+/] && !params[:order][:item_attributes].find{|k,vh| vh["amount"][/[a-zA-Z]+/]} ? true : false
   end
 end
