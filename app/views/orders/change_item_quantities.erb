@@ -3,7 +3,7 @@
 <% @order.items.sort.uniq.each do |item| %>
   <form action="/orders/<%=@order.id%>/<%=item.id%>/remove_from_order" method="POST">
     <ul>
-      <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="text" name="quantity" value="<%=@counts[item.name]%>"> <input type="submit" value="update"></li>
+      <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="text" name="item_attributes[amount]" value="<%=@counts[item.name]%>"> <input type="submit" value="update"></li>
       <p>Quantity: <%=@counts[item.name]%></p>
     </ul>
   </form>

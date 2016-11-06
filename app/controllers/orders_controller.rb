@@ -29,15 +29,16 @@ class OrdersController < ApplicationController
       invalid_quantity_flash(current_user)
       redirect "/orders/new"
     end
+    binding.pry
     redirect "/orders/#{instance_storage[0].id}"
   end
 
   get '/orders/:order_id' do #move logic to Order model (count method)
     check_logged_in do
       find_order_match_user_id(current_user) do
-        if !@order.items.empty?
-          x = @order.items.map{|i| i.name}
-          @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
+        existing_order = @order
+        if !existing_order.items.empty?
+          @quantity = Quantity
           erb :'orders/show'
         else
           redirect '/user'
@@ -50,8 +51,6 @@ class OrdersController < ApplicationController
     check_logged_in do
       find_order_match_user_id(current_user) do
         Item.sorter
-        x = @order.items.map{|i| i.name}
-        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
         erb :'orders/continue_shopping'
       end
     end
@@ -61,8 +60,6 @@ class OrdersController < ApplicationController
     check_logged_in do
       find_order_match_user_id(current_user) do
         Item.sorter
-        x = @order.items.map{|i| i.name}
-        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
         erb :'orders/change_item_quantities'
       end
     end
@@ -72,14 +69,14 @@ class OrdersController < ApplicationController
     check_logged_in do
       find_order_match_user_id(current_user) do
         if @order
-          @order_again = Order.new(user_id: @order.attributes[:user_id])
+          order_again = Order.new(user_id: @order.attributes[:user_id])
         end
-        @order_again.time_started                   #put
-        @order_again.items << @order.items           #these
-        @order_again.total_order                          #in
-        @order_again.save                           #a
-        current_user.orders << @order_again                #helper?
-                                          #^used in post /orders too
+        order_again.total_order(order_again)
+        order_again.time_started
+        order_again.items << @order.items
+        order_again.save
+        @order_again = order_again
+        current_user.orders << @order_again
         redirect "/placed_order/#{@order_again.id}"
       end
     end
@@ -104,27 +101,27 @@ class OrdersController < ApplicationController
   end
 
   post '/orders/:order_id/:item_id/remove_from_order' do # logic to Order model
-    @order = Order.find_by_id(params[:captures][0].to_i)
-    @item = Item.find_by_id(params[:captures][1].to_i)
-    if !@order.items.empty?
-      if @order && @item && params[:quantity].to_i >= 0
-        x = @order.items.map{|i| i.name}
-        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
-        @order.items.delete(@item)
+    existing_order = Order.find_by_id(params[:captures][0].to_i)
+    item = Item.find_by_id(params[:captures][1].to_i)
+    if !existing_order.items.empty?
+      if existing_order && item && params[:quantity].to_i >= 0
+        x = existing_order.items.map{|i| i.name}
+        @counts = x.each_with_object(Hash.new(0)) {|i,counts| counts[i] += 1}
+        existing_order.items.delete(@item)
         params[:quantity].to_i.times do
-          @order.items << @item
+          existing_order.items << @item
         end
       elsif !params[:quantity]
-        x = @order.items.map{|i| i.name}
-        @counts = x.each_with_object(Hash.new(0)) {|item,counts| counts[item] += 1}
-        @order.items.delete(@item)
+        x = existing_order.items.map{|i| i.name}
+        @counts = x.each_with_object(Hash.new(0)) {|i,counts| counts[i] += 1}
+        existing_order.items.delete(@item)
       end
-      @order.total_order
-      @order.save
-      if @order.items.empty?
-        redirect "/orders/#{@order.id}/continue_shopping"
+      existing_order.total_order
+      existing_order.save
+      if existing_order.items.empty?
+        redirect "/orders/#{instance_storage[0].id}/continue_shopping"
       else
-        redirect "/orders/#{@order.id}"
+        redirect "/orders/#{instance_storage[0].id}"
       end
     end
   end
