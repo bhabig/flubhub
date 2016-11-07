@@ -80,7 +80,7 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user) #finda way to clean this up - extract param safety checks & possible make each innermost condition its own method & quantity.create should have its own method
+  def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
     if params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
       params[:order][:item_attributes].each do |id, hash|
         if hash.include?("id")
@@ -119,16 +119,24 @@ class Order < ActiveRecord::Base
     instance_storage << @order
   end
 
+  def self.new_custom_only_order(params, current_user=nil, instance_storage=nil)
+    if self.custom_only_params(params) #inner
+      existing_order = Order.create(user_id: current_user.id)
+      self.custom_item_creation(params, instance_storage, existing_order)
+    end
+  end
+
+  def self.add_custom_only_to_order(params, current_user=nil, instance_storage=nil, existing_order=nil)
+    if self.custom_only_params(params) #inner
+      self.custom_item_creation(params, instance_storage, existing_order)
+    end
+  end
+
   def self.custom_items_only(params, current_user, instance_storage, existing_order=nil)
     if existing_order == nil
-      if self.custom_only_params(params) #inner
-        existing_order = Order.create(user_id: current_user.id)
-        self.custom_item_creation(params, instance_storage, existing_order)
-      end
+      self.new_custom_only_order(params, current_user, instance_storage)
     else
-      if self.custom_only_params(params) #inner
-        self.custom_item_creation(params, instance_storage, existing_order)
-      end
+      self.add_custom_only_to_order(params, current_user, instance_storage, existing_order)
     end
   end
 
