@@ -4,7 +4,7 @@
 <% q = item.quantities.where(order_id: @order.id) %>
   <form action="/orders/<%=@order.id%>/<%=item.id%>/remove_from_order" method="POST">
     <ul>
-      <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="number" name="item_attributes[amount]" min="0" value="<%=q[0].amount%>"> <input type="submit" value="update"></li>
+      <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="number" name="item_attributes[amount]" min="0" value="<%=q[0].amount%>" autocomplete="off"> <input type="submit" value="update"></li>
       <p>Quantity: <%=q[0].amount%></p>
     </ul>
   </form>

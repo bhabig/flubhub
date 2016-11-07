@@ -6,7 +6,7 @@
   <p><strong>Choose From Our List of Existing Items</strong></p>
   <%Item.all[0..2].each do |item|%>
   <ul>
-    <li><input type="checkbox" name="order[item_attributes][<%=item.id%>][id]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%> </strong> (Too hungry for just one? <input type="number" name="order[item_attributes][<%=item.id%>][amount]" min="0" id="<%=item.id%>" placeholder="enter quantity (2 or higher)">)</input></li>
+    <li><input type="checkbox" name="order[item_attributes][<%=item.id%>][id]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%> </strong> (Too hungry for just one? <input type="number" name="order[item_attributes][<%=item.id%>][amount]" min="1" id="<%=item.id%>" placeholder="enter quantity (2 or higher)" autocomplete="off">)</input></li>
     <p>{ <%= item.ingredients %> }</p>
     <br></br>
   </ul>
@@ -41,7 +41,7 @@
     </ul>
   <%end%>
   <br></br>
-  <p>Too hungry for just one? How many would you like?<input type="number" name="item[item_attributes][amount]" min="0" placeholder="quantity"></p>
+  <p>Too hungry for just one? How many would you like?<input type="number" name="item[item_attributes][amount]" min="1" placeholder="quantity" autocomplete="off"></p>
   <br></br>
   <input class="btn btn-primary" type="submit" value="Add To Florder">
 </form>

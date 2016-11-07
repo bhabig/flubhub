@@ -69,10 +69,10 @@ class OrdersController < ApplicationController
         if @order
           order_again = Order.new(user_id: @order.attributes[:user_id])
         end
-        order_again.total_order(order_again)
         order_again.time_started
         order_again.items << @order.items
         order_again.save
+        order_again.total_order
         @order_again = order_again
         current_user.orders << @order_again
         redirect "/placed_order/#{@order_again.id}"
@@ -102,10 +102,9 @@ class OrdersController < ApplicationController
     existing_order = Order.find_by_id(params[:order_id].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
     if !existing_order.items.empty?
-      Order.quantity_check(params)
-      if existing_order && @item && !params[:item_attributes]
+      if (existing_order && @item && !params[:item_attributes]) || (existing_order && @item && params[:item_attributes] && params[:item_attributes]["amount"].to_i == 0)
         existing_order.items.delete(@item)
-      elsif existing_order && @item && params[:item_attributes] && params[:item_attributes]["amount"].to_i >= 0
+      elsif existing_order && @item && params[:item_attributes] && params[:item_attributes]["amount"].to_i >= 1
         q = @item.quantities.where(order_id: existing_order.id)
         q[0].update(amount: params[:item_attributes]["amount"].to_i)
       end
@@ -155,7 +154,7 @@ class OrdersController < ApplicationController
     end
 
     def flash_redirect_no_items(existing_order=nil)
-      if (!params[:order][:item_attributes].find{|id, hash| hash.include?("id")} && (params[:item][:name] != "" || !params[:item][:item_attributes][:amount].empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order][:item_attributes].find{|id, hash| hash.include?("id")} && params[:item][:name] == "" && params[:item][:item_attributes][:amount].reject{|q| q.empty?}.empty?)
+      if (!params[:order][:item_attributes].find{|id, hash| hash.include?("id")} && (params[:item][:name] != "" || !params[:item][:item_attributes][:amount].empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order][:item_attributes].find{|id, hash| hash.include?("id")} && params[:item][:name] == "" && params[:item][:item_attributes][:amount].empty?)
         if existing_order
           empty_order_flash(current_user)
           redirect "/orders/#{existing_order.id}/continue_shopping"
