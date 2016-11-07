@@ -32,7 +32,7 @@ class OrdersController < ApplicationController
     redirect "/orders/#{instance_storage[0].id}"
   end
 
-  get '/orders/:order_id' do #move logic to Order model (count method)
+  get '/orders/:order_id' do
     check_logged_in do
       find_order_match_user_id(current_user) do
         existing_order = @order
@@ -98,22 +98,16 @@ class OrdersController < ApplicationController
     end
   end
 
-  post '/orders/:order_id/:item_id/remove_from_order' do # pull out "safety checks" into their own method & move some logic to model
+  post '/orders/:order_id/:item_id/remove_from_order' do
     existing_order = Order.find_by_id(params[:order_id].to_i)
-    @item = Item.find_by_id(params[:captures][1].to_i)
+    item = Item.find_by_id(params[:captures][1].to_i)
+    instance_storage = []
     if !existing_order.items.empty?
-      if (existing_order && @item && !params[:item_attributes]) || (existing_order && @item && params[:item_attributes] && params[:item_attributes]["amount"].to_i == 0)
-        existing_order.items.delete(@item)
-      elsif existing_order && @item && params[:item_attributes] && params[:item_attributes]["amount"].to_i >= 1
-        q = @item.quantities.where(order_id: existing_order.id)
-        q[0].update(amount: params[:item_attributes]["amount"].to_i)
-      end
-      existing_order.total_order
-      existing_order.save
-      if existing_order.items.empty?
-        redirect "/orders/#{existing_order.id}/continue_shopping"
+      Order.item_quantity_updater(params, existing_order, item, instance_storage)
+      if instance_storage[0].items.empty?
+        redirect "/orders/#{instance_storage[0].id}/continue_shopping"
       else
-        redirect "/orders/#{existing_order.id}"
+        redirect "/orders/#{instance_storage[0].id}"
       end
     end
   end
@@ -146,7 +140,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  helpers do #params have changed, so these will need retooling
+  helpers do #good
     def missing_fields_check(existing_order=nil)
       current_user
       flash_redirect_no_ingredients(existing_order)
@@ -166,7 +160,7 @@ class OrdersController < ApplicationController
     end
 
     def flash_redirect_no_ingredients(existing_order=nil)
-      if !params[:ingredients] && params[:item][:name] != "" && params[:item][:item_attributes][:amount].empty? || !params[:ingredients] && params[:item][:name] == "" && !params[:item][:item_attributes][:amount].empty? || !params[:ingredients] && params[:item][:name] != "" && !params[:item][:quantity].empty?
+      if !params[:ingredients] && params[:item][:name] != "" && params[:item][:item_attributes][:amount].empty? || !params[:ingredients] && params[:item][:name] == "" && !params[:item][:item_attributes][:amount].empty? || !params[:ingredients] && params[:item][:name] != "" && !params[:item][:item_attributes][:amount].empty?
         if existing_order
           missed_something_flash(current_user)
           redirect "/orders/#{existing_order.id}/continue_shopping"

@@ -126,6 +126,26 @@ class Order < ActiveRecord::Base
     end
   end
 
+  def self.item_quantity_updater_delete_params(params, existing_order=nil, item=nil)
+    (existing_order && item && !params[:item_attributes]) || (existing_order && item && params[:item_attributes] && params[:item_attributes]["amount"].to_i == 0)
+  end
+
+  def self.item_quantity_updater_change_params(params, existing_order=nil, item=nil)
+    existing_order && item && params[:item_attributes] && params[:item_attributes]["amount"].to_i >= 1
+  end
+
+  def self.item_quantity_updater(params, existing_order=nil, item=nil, instance_storage)
+    if self.item_quantity_updater_delete_params(params, existing_order, item)
+      existing_order.items.delete(item)
+    elsif self.item_quantity_updater_change_params(params, existing_order, item)
+      q = item.quantities.where(order_id: existing_order.id)
+      q[0].update(amount: params[:item_attributes]["amount"].to_i)
+    end
+    existing_order.total_order
+    existing_order.save
+    instance_storage << existing_order
+  end
+
   def self.quantity_check(params)
     !params[:item][:item_attributes][:amount][/[a-zA-Z]+/] && !params[:order][:item_attributes].find{|k,vh| vh["amount"][/[a-zA-Z]+/]} ? true : false
   end
