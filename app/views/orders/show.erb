@@ -5,7 +5,8 @@
   <h2>Items:</h2>
   <% @order.items.sort.uniq.each do |item| %>
     <p><strong><%=item.name%> ($<%=item.price%>)</strong> <a href="/items/<%=@order.id%>/<%=item.id%>">click to view item details</a></p>
-    <p>Quantity: <%= @counts[item.name] %></p>
+    <% q = item.quantities.where(order_id: @order.id) %>
+    <p>Quantity: <%= q[0].amount %></p>
     <br>
   <% end %>
   <p><strong>TOTAL: $<%=@order.total%></strong></p>
@@ -23,7 +24,8 @@
     <ul>
       <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="submit" value="remove"></li>
       <p><a href="/items/<%=@order.id%>/<%=item.id%>">click to view item details</a></p>
-      <p>Quantity: <%=@counts[item.name]%></p>
+      <% q = item.quantities.where(order_id: @order.id) %>
+      <p>Quantity: <%=  q[0].amount %></p>
     </ul>
   </form>
   <% end %>

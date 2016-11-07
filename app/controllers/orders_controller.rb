@@ -29,7 +29,6 @@ class OrdersController < ApplicationController
       invalid_quantity_flash(current_user)
       redirect "/orders/new"
     end
-    binding.pry
     redirect "/orders/#{instance_storage[0].id}"
   end
 
@@ -102,26 +101,20 @@ class OrdersController < ApplicationController
 
   post '/orders/:order_id/:item_id/remove_from_order' do # logic to Order model
     existing_order = Order.find_by_id(params[:captures][0].to_i)
-    item = Item.find_by_id(params[:captures][1].to_i)
+    @item = Item.find_by_id(params[:captures][1].to_i)
     if !existing_order.items.empty?
-      if existing_order && item && params[:quantity].to_i >= 0
-        x = existing_order.items.map{|i| i.name}
-        @counts = x.each_with_object(Hash.new(0)) {|i,counts| counts[i] += 1}
+      if existing_order && @item && !params[:item_attributes]
         existing_order.items.delete(@item)
-        params[:quantity].to_i.times do
-          existing_order.items << @item
-        end
-      elsif !params[:quantity]
-        x = existing_order.items.map{|i| i.name}
-        @counts = x.each_with_object(Hash.new(0)) {|i,counts| counts[i] += 1}
-        existing_order.items.delete(@item)
+      elsif existing_order && @item && params[:item_attributes] && params[:item_attributes]["amount"].to_i >= 0
+        q = @item.quantities.where(order_id: existing_order.id)
+        q[0].update(amount: params[:item_attributes]["amount"].to_i)
       end
       existing_order.total_order
       existing_order.save
       if existing_order.items.empty?
-        redirect "/orders/#{instance_storage[0].id}/continue_shopping"
+        redirect "/orders/#{existing_order.id}/continue_shopping"
       else
-        redirect "/orders/#{instance_storage[0].id}"
+        redirect "/orders/#{existing_order.id}"
       end
     end
   end

@@ -6,8 +6,8 @@ class Order < ActiveRecord::Base
 
   def total_order(instance_storage=nil)
     prices = self.items.map do |i|
-      q = i.quantities.where(order_id: instance_storage[0].id)
-      i.price * q.amount
+      q = i.quantities.where(order_id: self.id)
+      i.price * q[0].amount
     end
     self.total = prices.inject(0){|total, price| total += price}
   end
@@ -21,13 +21,13 @@ class Order < ActiveRecord::Base
   end
 
   def item_attributes=(params)
+    binding.pry
     @q = []
     params.each do |k, v|
       if v["amount"] != 0 && !v["amount"][/[a-zA-Z]+/] && v["id"]
-        @q << self.quantities.build(item_id: v["id"].to_i, amount: v["amount"].to_i)
+        @q << self.quantities.build(item_id: v["id"].to_i, amount: (v["amount"] == "" ? 1 : v["amount"].to_i))
       end
     end
-    binding.pry
   end
 
   def item_attributes
@@ -35,16 +35,15 @@ class Order < ActiveRecord::Base
   end
 
   def self.post_or_patch_order(params, current_user, instance_storage, existing_order=nil)
-    self.order_with_preset(params, instance_storage, existing_order, current_user)
-    self.custom_items_only(params, instance_storage, existing_order, current_user)
-    binding.pry
+    self.order_with_preset(params, current_user, instance_storage, existing_order)
+    self.custom_items_only(params, current_user, instance_storage, existing_order)
     @order.total_order(instance_storage)
     @order.save
     instance_storage << @order
   end
 
-  def self.order_with_preset(params, instance_storage, existing_order=nil, current_user)#add logic to use new edit method?
-    if params[:order]
+  def self.order_with_preset(params, current_user, instance_storage, existing_order=nil)#add logic to use new edit method?
+    if params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
       self.create_order_add_items(params, instance_storage, existing_order, current_user)
       self.add_customs(params)
       if !params[:ingredients] && params[:item][:name] != ""
@@ -72,28 +71,45 @@ class Order < ActiveRecord::Base
   end
 
   def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
-    if params[:order]
-      existing_order.update(params[:order])
+    if params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
+      params[:order][:item_attributes].each do |id, hash|
+        if hash.include?("id")
+          item = Item.find_by_id(id.to_i)
+          q = item.quantities.where(order_id: existing_order.id)
+          if !q.empty?
+            x = params[:order][:item_attributes][id]["amount"] == "" ? 1 : params[:order][:item_attributes][id]["amount"].to_i
+            new_amount = q[0].amount + x
+            q[0].update(amount: new_amount)
+            q[0].save
+          else
+            quantity = Quantity.create(order_id: existing_order.id, item_id: item.id, amount: params[:order][:item_attributes][id]["amount"] == "" ? 1 : params[:order][:item_attributes][id]["amount"].to_i)
+            quantity.save
+          end
+        end
+      end
       existing_order.save
-      existing_order_storage << existing_order
-    elsif #what is this for again?
       existing_order_storage << existing_order
     end
   end
 
   def self.add_customs(params)#works as is for edit
     if params[:ingredients]
-      @order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+      custom_item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+      quantity = Quantity.create(order_id: @order.id, item_id: custom_item.id, amount: params[:item][:item_attributes][:amount] == "" ? 1 : params[:item][:item_attributes][:amount].to_i)
+      @order.items << custom_item
     end
   end
 
+
   def self.custom_only_params(params)
-    params[:ingredients] && !params[:order]
+    params[:ingredients] && !params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
   end
 
-  def self.custom_item_creation(params, existing_order=nil)
-    existing_order.items << Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+  def self.custom_item_creation(params, instance_storage, existing_order=nil)
+    custom_item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
+    quantity = Quantity.create(order_id: existing_order.id, item_id: custom_item.id, amount: params[:item][:item_attributes][:amount] == "" ? 1 : params[:item][:item_attributes][:amount].to_i)
 
+    existing_order.items << custom_item
     @order = existing_order
     instance_storage << @order
   end
@@ -101,12 +117,12 @@ class Order < ActiveRecord::Base
   def self.custom_items_only(params, current_user, instance_storage, existing_order=nil) #break this down and clean it up!
     if existing_order == nil
       if self.custom_only_params(params)
-        existing_order = Order.create(user_id: @user.id)
-        self.custom_item_creation(params, existing_order=nil)
+        existing_order = Order.create(user_id: current_user.id)
+        self.custom_item_creation(params, instance_storage, existing_order)
       end
     else
       if self.custom_only_params(params)
-        self.custom_item_creation(params, existing_order=nil)
+        self.custom_item_creation(params, instance_storage, existing_order)
       end
     end
   end

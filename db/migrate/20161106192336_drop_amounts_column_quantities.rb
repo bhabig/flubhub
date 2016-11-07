@@ -1,5 +1,5 @@
 class DropAmountsColumnQuantities < ActiveRecord::Migration
   def change
-    remove_column :quantities, :amounts, :integer
+    remove_column :quantities, :amount, :integer
   end
 end

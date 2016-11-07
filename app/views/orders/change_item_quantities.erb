@@ -1,10 +1,11 @@
 <h1>Almost Done! Make Changes Now And Then Place Your Florder!!</h1>
 <br></br>
 <% @order.items.sort.uniq.each do |item| %>
+<% q = item.quantities.where(order_id: @order.id) %>
   <form action="/orders/<%=@order.id%>/<%=item.id%>/remove_from_order" method="POST">
     <ul>
-      <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="text" name="item_attributes[amount]" value="<%=@counts[item.name]%>"> <input type="submit" value="update"></li>
-      <p>Quantity: <%=@counts[item.name]%></p>
+      <li><strong><%=item.name%> ($<%=item.price%>)</strong> <input type="text" name="item_attributes[amount]" value="<%=q[0].amount%>"> <input type="submit" value="update"></li>
+      <p>Quantity: <%=q[0].amount%></p>
     </ul>
   </form>
 <% end %>
