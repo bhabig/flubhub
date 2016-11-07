@@ -10,7 +10,7 @@
     <ul>
       <li><input type="checkbox" name="order[item_attributes][<%=item.id%>][id]" id="<%=item.id%>" value="<%=item.id%>"><strong><%=item.name%></strong></input></li>
       <p>{ <%= item.ingredients %> }</p>
-      <p>Too hungry for just one? How many would you like?<input type="number" name="order[item_attributes][<%=item.id%>][amount]" id="<%=item.id%>" placeholder="enter quantity (2 or higher)">
+      <p>Too hungry for just one? How many would you like?<input type="number" name="order[item_attributes][<%=item.id%>][amount]" min="0" id="<%=item.id%>" placeholder="enter quantity (2 or higher)">
       <br></br>
     </ul>
   <%end%>
@@ -44,7 +44,7 @@
     </ul>
   <%end%>
   <br></br>
-  <p>Too hungry for just one? How many would you like?<input type="number" name="item[item_attributes][amount]" placeholder="quantity"></p>
+  <p>Too hungry for just one? How many would you like?<input type="number" name="item[item_attributes][amount]" min="0" placeholder="quantity"></p>
   <input class="btn btn-primary" type="submit" value="Add To Florder">
 </form><br><form method="post" action="/orders/<%=@order.id%>/delete">
                                <input id="hidden" type="hidden" name="_method" value="DELETE">
