@@ -37,7 +37,6 @@ class OrdersController < ApplicationController
       find_order_match_user_id(current_user) do
         existing_order = @order
         if !existing_order.items.empty?
-          #@quantity = Quantity
           erb :'orders/show'
         else
           redirect '/user'
@@ -103,6 +102,7 @@ class OrdersController < ApplicationController
     existing_order = Order.find_by_id(params[:order_id].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
     if !existing_order.items.empty?
+      Order.quantity_check(params)
       if existing_order && @item && !params[:item_attributes]
         existing_order.items.delete(@item)
       elsif existing_order && @item && params[:item_attributes] && params[:item_attributes]["amount"].to_i >= 0
@@ -155,7 +155,7 @@ class OrdersController < ApplicationController
     end
 
     def flash_redirect_no_items(existing_order=nil)
-      if (!params[:order] && (params[:item][:name] != "" || !params[:item][:item_attributes][:amount].empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order] && params[:item][:name] == "" && params[:item][:item_attributes][:amount].reject{|q| q.empty?}.empty?)
+      if (!params[:order][:item_attributes].find{|id, hash| hash.include?("id")} && (params[:item][:name] != "" || !params[:item][:item_attributes][:amount].empty?) && !params[:ingredients]) || (!params[:ingredients] && !params[:order][:item_attributes].find{|id, hash| hash.include?("id")} && params[:item][:name] == "" && params[:item][:item_attributes][:amount].reject{|q| q.empty?}.empty?)
         if existing_order
           empty_order_flash(current_user)
           redirect "/orders/#{existing_order.id}/continue_shopping"
