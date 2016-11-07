@@ -69,21 +69,24 @@ class Order < ActiveRecord::Base
     existing_order_storage << existing_order
   end
 
+  def self.update_logic(params, q=nil, id=nil, existing_order=nil, item=nil)
+    if !q.empty? #innermost
+      x = params[:order][:item_attributes][id]["amount"] == "" ? 1 : params[:order][:item_attributes][id]["amount"].to_i
+      new_amount = q[0].amount + x
+      q[0].update(amount: new_amount)
+      q[0].save
+    else #innermost
+      quantity = Quantity.create_quantity(params, existing_order, item)
+    end
+  end
+
   def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user) #finda way to clean this up - extract param safety checks & possible make each innermost condition its own method & quantity.create should have its own method
     if params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
       params[:order][:item_attributes].each do |id, hash|
         if hash.include?("id")
           item = Item.find_by_id(id.to_i)
           q = item.quantities.where(order_id: existing_order.id)
-          if !q.empty? #innermost
-            x = params[:order][:item_attributes][id]["amount"] == "" ? 1 : params[:order][:item_attributes][id]["amount"].to_i
-            new_amount = q[0].amount + x
-            q[0].update(amount: new_amount)
-            q[0].save
-          else #innermost
-            quantity = Quantity.create(order_id: existing_order.id, item_id: item.id, amount: params[:order][:item_attributes][id]["amount"] == "" ? 1 : params[:order][:item_attributes][id]["amount"].to_i)
-            quantity.save
-          end
+          self.update_logic(params, q, id, existing_order, item)
         end
       end
       existing_order.save
@@ -91,29 +94,32 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.add_customs(params) #quantity.create can be extracted into a method
+  def self.add_customs(params)
     if params[:ingredients]
       custom_item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-      quantity = Quantity.create(order_id: @order.id, item_id: custom_item.id, amount: params[:item][:item_attributes][:amount] == "" ? 1 : params[:item][:item_attributes][:amount].to_i)
+      order = @order
+      quantity = Quantity.create_quantity(params, order, custom_item)
+      @order = order
       @order.items << custom_item
     end
   end
-
 
   def self.custom_only_params(params)
     params[:ingredients] && !params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
   end
 
-  def self.custom_item_creation(params, instance_storage, existing_order=nil) #quantity create can be extracted into a method
+  def self.custom_item_creation(params, instance_storage, existing_order=nil)
     custom_item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
-    quantity = Quantity.create(order_id: existing_order.id, item_id: custom_item.id, amount: params[:item][:item_attributes][:amount] == "" ? 1 : params[:item][:item_attributes][:amount].to_i)
+    order = @order
+    quantity = Quantity.create_quantity(params, order, custom_item)
+    @order = order
 
     existing_order.items << custom_item
     @order = existing_order
     instance_storage << @order
   end
 
-  def self.custom_items_only(params, current_user, instance_storage, existing_order=nil) #turn each inner if into its own method
+  def self.custom_items_only(params, current_user, instance_storage, existing_order=nil)
     if existing_order == nil
       if self.custom_only_params(params) #inner
         existing_order = Order.create(user_id: current_user.id)
