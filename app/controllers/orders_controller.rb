@@ -37,7 +37,7 @@ class OrdersController < ApplicationController
       find_order_match_user_id(current_user) do
         existing_order = @order
         if !existing_order.items.empty?
-          @quantity = Quantity
+          #@quantity = Quantity
           erb :'orders/show'
         else
           redirect '/user'
@@ -46,7 +46,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:order_id/continue_shopping' do #move logic to Order model (count method)
+  get '/orders/:order_id/continue_shopping' do #good
     check_logged_in do
       find_order_match_user_id(current_user) do
         Item.sorter
@@ -55,7 +55,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:order_id/change_item_quantities' do #move logic to Order model (count mehtod)
+  get '/orders/:order_id/change_item_quantities' do #good
     check_logged_in do
       find_order_match_user_id(current_user) do
         Item.sorter
@@ -64,7 +64,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/orders/:order_id/place_again' do
+  get '/orders/:order_id/place_again' do #may be opportunity to extract into helper(s) but not too bad
     check_logged_in do
       find_order_match_user_id(current_user) do
         if @order
@@ -81,7 +81,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  patch '/orders/:order_id' do
+  patch '/orders/:order_id' do #look for things to extract into a helper. not terrible as is
     check_logged_in do
       existing_order = Order.find_by_id(params[:order_id])
       instance_storage = []
@@ -99,8 +99,8 @@ class OrdersController < ApplicationController
     end
   end
 
-  post '/orders/:order_id/:item_id/remove_from_order' do # logic to Order model
-    existing_order = Order.find_by_id(params[:captures][0].to_i)
+  post '/orders/:order_id/:item_id/remove_from_order' do # pull out "safety checks" into their own method & move some logic to model
+    existing_order = Order.find_by_id(params[:order_id].to_i)
     @item = Item.find_by_id(params[:captures][1].to_i)
     if !existing_order.items.empty?
       if existing_order && @item && !params[:item_attributes]
@@ -119,7 +119,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  get '/placed_order/:order_id' do #recheck what you're doing here? probably
+  get '/placed_order/:order_id' do #good
     check_logged_in do
       find_order_match_user_id(current_user) do
         if @order.total > 0
@@ -132,14 +132,14 @@ class OrdersController < ApplicationController
     end
   end
 
-  delete '/orders/:order_id/delete' do
+  delete '/orders/:order_id/delete' do #good
     find_order_match_user_id(current_user) do
       @order.destroy
       redirect '/user'
     end
   end
 
-  get '/delete_all' do
+  get '/delete_all' do #good
     check_logged_in do
       current_user.orders.clear
       Order.all.map{|o| o.destroy if o.user_id == current_user.id}
@@ -147,7 +147,7 @@ class OrdersController < ApplicationController
     end
   end
 
-  helpers do #have work do to on message variety
+  helpers do #params have changed, so these will need retooling
     def missing_fields_check(existing_order=nil)
       current_user
       flash_redirect_no_ingredients(existing_order)

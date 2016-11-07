@@ -21,7 +21,6 @@ class Order < ActiveRecord::Base
   end
 
   def item_attributes=(params)
-    binding.pry
     @q = []
     params.each do |k, v|
       if v["amount"] != 0 && !v["amount"][/[a-zA-Z]+/] && v["id"]
@@ -42,7 +41,7 @@ class Order < ActiveRecord::Base
     instance_storage << @order
   end
 
-  def self.order_with_preset(params, current_user, instance_storage, existing_order=nil)#add logic to use new edit method?
+  def self.order_with_preset(params, current_user, instance_storage, existing_order=nil)
     if params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
       self.create_order_add_items(params, instance_storage, existing_order, current_user)
       self.add_customs(params)
@@ -52,7 +51,7 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.create_order_add_items(params, instance_storage, existing_order=nil, current_user)#add logic or create new method for editings
+  def self.create_order_add_items(params, instance_storage, existing_order=nil, current_user)
     existing_order_storage = []
     if existing_order == nil
       self.create_new_order(params, instance_storage, existing_order_storage, existing_order, current_user)
@@ -70,18 +69,18 @@ class Order < ActiveRecord::Base
     existing_order_storage << existing_order
   end
 
-  def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user)
+  def self.update_existing_order(params, instance_storage, existing_order_storage, existing_order=nil, current_user) #finda way to clean this up - extract param safety checks & possible make each innermost condition its own method & quantity.create should have its own method
     if params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
       params[:order][:item_attributes].each do |id, hash|
         if hash.include?("id")
           item = Item.find_by_id(id.to_i)
           q = item.quantities.where(order_id: existing_order.id)
-          if !q.empty?
+          if !q.empty? #innermost
             x = params[:order][:item_attributes][id]["amount"] == "" ? 1 : params[:order][:item_attributes][id]["amount"].to_i
             new_amount = q[0].amount + x
             q[0].update(amount: new_amount)
             q[0].save
-          else
+          else #innermost
             quantity = Quantity.create(order_id: existing_order.id, item_id: item.id, amount: params[:order][:item_attributes][id]["amount"] == "" ? 1 : params[:order][:item_attributes][id]["amount"].to_i)
             quantity.save
           end
@@ -92,7 +91,7 @@ class Order < ActiveRecord::Base
     end
   end
 
-  def self.add_customs(params)#works as is for edit
+  def self.add_customs(params) #quantity.create can be extracted into a method
     if params[:ingredients]
       custom_item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
       quantity = Quantity.create(order_id: @order.id, item_id: custom_item.id, amount: params[:item][:item_attributes][:amount] == "" ? 1 : params[:item][:item_attributes][:amount].to_i)
@@ -105,7 +104,7 @@ class Order < ActiveRecord::Base
     params[:ingredients] && !params[:order][:item_attributes].find{|id, hash| hash.include?("id")}
   end
 
-  def self.custom_item_creation(params, instance_storage, existing_order=nil)
+  def self.custom_item_creation(params, instance_storage, existing_order=nil) #quantity create can be extracted into a method
     custom_item = Item.create(name: params[:item][:name]+" (your custom flurger)", ingredients: params[:ingredients].join(", "), price: 11.00)
     quantity = Quantity.create(order_id: existing_order.id, item_id: custom_item.id, amount: params[:item][:item_attributes][:amount] == "" ? 1 : params[:item][:item_attributes][:amount].to_i)
 
@@ -114,14 +113,14 @@ class Order < ActiveRecord::Base
     instance_storage << @order
   end
 
-  def self.custom_items_only(params, current_user, instance_storage, existing_order=nil) #break this down and clean it up!
+  def self.custom_items_only(params, current_user, instance_storage, existing_order=nil) #turn each inner if into its own method
     if existing_order == nil
-      if self.custom_only_params(params)
+      if self.custom_only_params(params) #inner
         existing_order = Order.create(user_id: current_user.id)
         self.custom_item_creation(params, instance_storage, existing_order)
       end
     else
-      if self.custom_only_params(params)
+      if self.custom_only_params(params) #inner
         self.custom_item_creation(params, instance_storage, existing_order)
       end
     end
