@@ -23,7 +23,7 @@
   }
 
   .wrapper {
-    background: white;
+    background: #00cc66;
     -moz-box-shadow: 0 0 10px rgba(0,0,0,0.15);
     -webkit-box-shadow: 0 0 10px rgba(0,0,0,0.15);
     box-shadow: 0 0 10px rgba(0,0,0,0.15);
