@@ -18,6 +18,7 @@ class OrdersController < ApplicationController
   end
 
   post '/orders' do
+    binding.pry
     current_user
     instance_storage = []
     if Order.quantity_check(params) == true
